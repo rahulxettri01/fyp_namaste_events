@@ -4,7 +4,7 @@ import 'package:fyp_namaste_events/model/vendor_venue_model.dart';
 import 'package:http/http.dart' as http;
 
 class Api {
-  static const baseUrl = "http://192.168.1.87:2000/api/";
+  static const baseUrl = "http://192.168.1.90:2000/api/";
 
   // POST Method - Add Venue
   static Future<void> addVenue(Map<String, dynamic> vdata) async {
