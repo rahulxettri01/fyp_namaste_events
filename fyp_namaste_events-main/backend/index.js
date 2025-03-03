@@ -1,15 +1,20 @@
-const express = require("express");
 
+const express = require("express");
+const mongoose = require("mongoose");
 const app = express();
 const PORT = 2000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const {connectUserDB, connectAdminDB} = require("./Config/DBconfig");
+
 const venueData = [];
 
-app.listen(PORT, () => {
-    console.log(`Connected to server at port ${PORT}`);
-});
+//connect to mongoose
+mongoose.set('strictQuery', true);
+connectUserDB.call();
+
+
 
 // POST API to add venue
 app.post("/api/add_venue", (req, res) => {
@@ -83,4 +88,7 @@ app.delete("/api/delete/:id", (req, res) => {
         status: "success",
         message: "Venue deleted"
     });
+});
+app.listen(PORT, () => {
+    console.log(`Connected to server at port ${PORT}`);
 });

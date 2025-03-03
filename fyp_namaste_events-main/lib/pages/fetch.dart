@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:fyp_namaste_events/model/vendor_venue_model.dart';
-import 'package:fyp_namaste_events/services/api.dart';
+import 'package:fyp_namaste_events/services/Api/api.dart';
 
 class FetchData extends StatelessWidget {
   const FetchData({super.key});

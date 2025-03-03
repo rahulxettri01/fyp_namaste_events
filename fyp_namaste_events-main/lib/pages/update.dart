@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/model/vendor_venue_model.dart';
-import 'package:fyp_namaste_events/services/api.dart';
+import 'package:fyp_namaste_events/services/Api/api.dart';
 import 'package:fyp_namaste_events/pages/edit.dart';
 
 class UpdateScreen extends StatelessWidget {
