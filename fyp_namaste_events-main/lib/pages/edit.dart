@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/model/vendor_venue_model.dart';
-import 'package:fyp_namaste_events/services/Api/api.dart';
+import 'package:fyp_namaste_events/services/Api/api_venue_vendor.dart';
 
 class EditScreen extends StatefulWidget {
   final venue data;

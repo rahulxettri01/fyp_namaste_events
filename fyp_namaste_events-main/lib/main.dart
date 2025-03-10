@@ -23,10 +23,18 @@
 // }
 import 'package:flutter/material.dart';
 
-import 'package:fyp_namaste_events/pages/SignUpPage.dart'; // Import the SignUpPage widget
+import 'package:fyp_namaste_events/pages/SignUpPage.dart';
+import 'package:fyp_namaste_events/providers/user_provider.dart';
+import 'package:provider/provider.dart'; // Import the SignUpPage widget
 
 void main() {
-  runApp(MyApp());
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_)=>UserProvider()),
+    ],
+    child: MyApp(),
+  ),
+  );
 }
 
 class MyApp extends StatelessWidget {

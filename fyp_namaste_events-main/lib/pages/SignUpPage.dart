@@ -1,5 +1,6 @@
-import 'package:fyp_namaste_events/services/Api/api_signup.dart';
+import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/login_register_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -17,23 +18,61 @@ class _SignUpPageState extends State<SignUpPage> {
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
   bool isTermsAccepted = false;
-  String? selectedRole ;
+  String? selectedRole;
   String? errorMessage = '';
 
   void _signUp() {
     setState(() {
+      errorMessage = '';
 
       if (controllerPassword.text != controllerConfirmPassword.text) {
         errorMessage = "Passwords do not match.";
+      } else if (!isTermsAccepted) {
+        errorMessage = "You must accept the Terms of Service.";
+      } else if (selectedRole == null || selectedRole!.isEmpty) {
+        errorMessage = "Please select a role.";
       } else {
-        var data={
+        print(selectedRole);
+        var data = {
           "userName": controllerName.text,
           "email": controllerEmail.text,
           "phone": controllerPhone.text,
           "password": controllerPassword.text,
           "role": selectedRole,
         };
-        Api.signup(data);      }
+
+        // Call the API and handle the response
+        Api.signup(data).then((response) {
+          if (response != null ) {
+            int statusCode = response["status_code"];
+
+            if (statusCode == 200) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Signup successful! Please log in."),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            } else {
+              setState(() {
+                errorMessage = "Signup . Try again.";
+              });
+            }
+          } else {
+            setState(() {
+              errorMessage = "Unexpected response from server.";
+            });
+          }
+        }).catchError((error) {
+          setState(() {
+            errorMessage = "Error occurred: ${error.toString()}";
+          });
+        });
+      }
     });
   }
 
@@ -41,14 +80,16 @@ class _SignUpPageState extends State<SignUpPage> {
       {bool isPassword = false, bool isConfirmPassword = false}) {
     return TextField(
       controller: controller,
-      obscureText: (isPassword && !isPasswordVisible) || (isConfirmPassword && !isConfirmPasswordVisible),
+      obscureText: (isPassword && !isPasswordVisible) ||
+          (isConfirmPassword && !isConfirmPasswordVisible),
       decoration: InputDecoration(
         labelText: title,
         border: const OutlineInputBorder(),
         suffixIcon: isPassword || isConfirmPassword
             ? IconButton(
           icon: Icon(
-            (isPassword && isPasswordVisible) || (isConfirmPassword && isConfirmPasswordVisible)
+            (isPassword && isPasswordVisible) ||
+                (isConfirmPassword && isConfirmPasswordVisible)
                 ? Icons.visibility
                 : Icons.visibility_off,
           ),
@@ -88,8 +129,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-
-
   Widget _termsAndConditions() {
     return Row(
       children: [
@@ -116,7 +155,12 @@ class _SignUpPageState extends State<SignUpPage> {
       children: [
         const Text("Have an account?"),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          },
           child: const Text(
             "Log in",
             style: TextStyle(color: Colors.blue),
@@ -209,6 +253,3 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 }
-
-
-

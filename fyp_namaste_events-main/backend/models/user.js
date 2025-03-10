@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   phone: joi.string().regex(/^[0-9]{10}$/).messages({'string.pattern.base': `Phone number must have 10 digits.`}).required(),   //  phone not working
   password: { type: String, required: true },
   role: { type: String, default: "user" },
+  status: {type: String, default:"unverifed"},
   // role: { type: String, default: "user", enum: ["user", "admin"] },
 });
 
