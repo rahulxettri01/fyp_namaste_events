@@ -1,21 +1,23 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
 
 class Api {
-  static const String baseUrl = "http://192.168.1.72:2000/auth/";
+
+
 
   // Function to sign up a user
   static Future<Map<String, dynamic>> signup(Map<String, dynamic> udata) async {
-    var url = Uri.parse("${baseUrl}sign_up");
+    var url = Uri.parse("${APIConstants.baseUrl}/sign_up");
     debugPrint("Request URL: $url");
 
     try {
       final response = await http.post(
         url,
         headers:<String, String>
-        {"Content-Type": "application/json"},
+        {"Content-Type": "application/json; charset=UTF-8"},
         body: jsonEncode(udata),
       );
 
@@ -39,10 +41,11 @@ class Api {
   }
 
   static Future<Map<String, dynamic>> login(Map<String, dynamic> udata) async {
-    var url = Uri.parse("${baseUrl}log_in");
+    var url = Uri.parse("${APIConstants.baseUrl}/log_in");
     debugPrint("Request URL: $url");
 
     try {
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

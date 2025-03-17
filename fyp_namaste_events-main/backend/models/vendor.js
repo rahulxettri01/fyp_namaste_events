@@ -9,6 +9,7 @@ const vendorSchema = new mongoose.Schema({
   status: { type: String, default: "unverified" },
   citizenshipFilePath: { type: String },
   panFilePath: { type: String },
+  category: {type: String, required: true},
 });
 
 const vendorModel = mongoose.model("vendorModel", vendorSchema);

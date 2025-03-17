@@ -5,7 +5,7 @@ dotenv.config();
 
 const connectUserDB = () => {
   try {
-    const conn = mongoose.connect(process.env.DATABASE_user).then(() => {
+    const conn = mongoose.connect(process.env.DATABASE_User).then(() => {
       console.log("User DB connected");
     });
 
@@ -18,7 +18,7 @@ const connectUserDB = () => {
 
 const connectAdminDB = () => {
   try {
-    const conn = mongoose.connect(process.env.DATABASE_admin).then(() => {
+    const conn = mongoose.connect(process.env.DATABASE_Vendor).then(() => {
       console.log("admin DB connected");
     });
 
@@ -29,4 +29,4 @@ const connectAdminDB = () => {
   }
 };
 
-module.exports = { connectUserDB,connectAdminDB  };
+module.exports = { connectUserDB, connectAdminDB };

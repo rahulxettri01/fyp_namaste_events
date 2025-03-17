@@ -17,9 +17,10 @@ class userData{
     required this.role,
     required this.token,
   });
+
   Map<String, dynamic> toMap() {
     return {
-      'name': userName,
+      'userName': userName,
       'email': email,
       'token': token,
       'phone':phone,

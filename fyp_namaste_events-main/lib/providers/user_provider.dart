@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/model/user_registration_model.dart';
 
 class UserProvider extends ChangeNotifier {
-  userData _userData = userData(
+  userData _userdata = userData(
     id: '',
     userName: '',
     email: '',
@@ -12,15 +12,15 @@ class UserProvider extends ChangeNotifier {
     password:'',
   );
 
-  userData get user => _userData;
+  userData get user => _userdata;
 
   void setUser(String user) {
-    _userData = userData.fromJson(user);
+    _userdata = userData.fromJson(user);
     notifyListeners();
   }
 
   void setUserFromModel(userData user) {
-    _userData = user;
+    _userdata = user;
     notifyListeners();
   }
 }

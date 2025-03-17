@@ -4,9 +4,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fyp_namaste_events/pages/admin_panel.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
+
+import 'dashboard.dart';
 
 class VerificationPage extends StatefulWidget {
-  const VerificationPage({Key? key}) : super(key: key);
+  final token;
+  const VerificationPage({@required this.token, super.key});
 
   @override
   _VerificationPageState createState() => _VerificationPageState();
@@ -16,6 +20,42 @@ class _VerificationPageState extends State<VerificationPage> {
   bool isChecked = false;
   List<File> selectedFiles = [];
   List<String> selectedFileNames = [];
+  late String userStatus;
+  late String vendorType;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Map<String,dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
+    userStatus = jwtDecodedToken['status'];
+    vendorType = jwtDecodedToken['category'];
+
+    if (userStatus == "verified"){
+      _redirectUser(vendorType);
+    }
+
+  }
+
+  void _redirectUser(String vendorType) {
+    Widget nextScreen;
+
+    if (vendorType == "Venue") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
+      );
+    } else if (vendorType == "decorator") {
+      // nextScreen = DecoratorDashboard(token: widget.token);
+    } else {
+      // nextScreen = PhotographerDashboard(token: widget.token);
+    }
+
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => nextScreen),
+    // );
+  }
 
   // Function to pick multiple files
   Future<void> pickFiles() async {
@@ -35,7 +75,7 @@ class _VerificationPageState extends State<VerificationPage> {
       try {
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://192.168.1.72:2000/vendor/upload'), // Replace with your actual API URL
+          Uri.parse('http://192.168.1.90:2000/vendor/vendorAuth/upload'), // Replace with your actual API URL
         );
 
         // Add multiple files to the request
@@ -53,7 +93,7 @@ class _VerificationPageState extends State<VerificationPage> {
           );
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminPanel()),
+            MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token,)),
           );
         } else {
           print('Failed to upload files: ${response.reasonPhrase}');
@@ -74,7 +114,14 @@ class _VerificationPageState extends State<VerificationPage> {
       );
     }
   }
-
+  // Sign-out function
+  void _signOut() {
+    // Navigate to login page and remove the current screen from stack
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,11 +204,28 @@ class _VerificationPageState extends State<VerificationPage> {
                 style: TextStyle(fontSize: 14, color: Colors.black),
               ),
             ),
+            // Sign-out button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _signOut,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  "Sign Out",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
 
   // File Picker UI
   Widget filePickerButton() {

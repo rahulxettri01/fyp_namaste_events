@@ -19,6 +19,7 @@ class _SignUpPageState extends State<SignUpPage> {
   bool isConfirmPasswordVisible = false;
   bool isTermsAccepted = false;
   String? selectedRole;
+  String? selectedVendorType;
   String? errorMessage = '';
 
   void _signUp() {
@@ -32,18 +33,19 @@ class _SignUpPageState extends State<SignUpPage> {
       } else if (selectedRole == null || selectedRole!.isEmpty) {
         errorMessage = "Please select a role.";
       } else {
-        print(selectedRole);
         var data = {
           "userName": controllerName.text,
           "email": controllerEmail.text,
           "phone": controllerPhone.text,
           "password": controllerPassword.text,
           "role": selectedRole,
+          "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
+
         };
 
         // Call the API and handle the response
         Api.signup(data).then((response) {
-          if (response != null ) {
+          if (response != null) {
             int statusCode = response["status_code"];
 
             if (statusCode == 200) {
@@ -59,7 +61,7 @@ class _SignUpPageState extends State<SignUpPage> {
               );
             } else {
               setState(() {
-                errorMessage = "Signup . Try again.";
+                errorMessage = "Signup failed. Try again.";
               });
             }
           } else {
@@ -110,7 +112,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _roleDropdown() {
     return DropdownButtonFormField<String>(
-      value: selectedRole != null && selectedRole!.isNotEmpty ? selectedRole : null, // Ensure it's null initially
+      value: selectedRole,
       decoration: const InputDecoration(
         labelText: 'Select Role',
         border: OutlineInputBorder(),
@@ -124,9 +126,33 @@ class _SignUpPageState extends State<SignUpPage> {
       onChanged: (String? newValue) {
         setState(() {
           selectedRole = newValue;
+          selectedVendorType = null;
         });
       },
     );
+  }
+
+  Widget _vendorTypeDropdown() {
+    return selectedRole == "Admin"
+        ? DropdownButtonFormField<String>(
+      value: selectedVendorType,
+      decoration: const InputDecoration(
+        labelText: 'Select Vendor Type',
+        border: OutlineInputBorder(),
+      ),
+      items: ['Venue', 'Decoration', 'Photography'].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        setState(() {
+          selectedVendorType = newValue;
+        });
+      },
+    )
+        : Container();
   }
 
   Widget _termsAndConditions() {
@@ -202,6 +228,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 const SizedBox(height: 16),
                 _roleDropdown(),
                 const SizedBox(height: 16),
+                _vendorTypeDropdown(),
+                const SizedBox(height: 16),
                 _termsAndConditions(),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -218,33 +246,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
-                if (errorMessage != null && errorMessage!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                const Text("Or sign up with"),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.g_mobiledata, size: 40),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(width: 20),
-                    IconButton(
-                      icon: const Icon(Icons.facebook, size: 40),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _loginText(),
+                const SizedBox(height: 16), // Spacing before login text
+                _loginText(), // Now added
               ],
             ),
           ),

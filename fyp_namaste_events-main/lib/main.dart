@@ -22,22 +22,28 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/AddInventory.dart';
 
 import 'package:fyp_namaste_events/pages/SignUpPage.dart';
 import 'package:fyp_namaste_events/providers/user_provider.dart';
-import 'package:provider/provider.dart'; // Import the SignUpPage widget
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import the SignUpPage widget
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (_)=>UserProvider()),
+      ChangeNotifierProvider(create: (_) => UserProvider()),
     ],
-    child: MyApp(),
+    child:  MyApp(token: prefs.getString('FrontToken'),),
   ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  final token;
+  const MyApp({@required this.token,Key? key}) : super( key: key);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -45,7 +51,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const SignUpPage(), // Set SignUpPage as the first screen
+      home: AddInventoryPage(), // Set SignUpPage as the first screen
     );
   }
 }

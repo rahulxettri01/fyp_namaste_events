@@ -4,7 +4,8 @@ const { vendorModel } = require("../models/vendor");
 const { connectAdminDB } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const upload = require("../Config/multerConfig");
+const { uploadVendor, uploadUser } = require("../Config/multerConfig");
+const { diskStorage } = require("multer");
 const jwtExpiryMinute = 60;
 
 const vendorData = [];
@@ -95,8 +96,21 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/upload", upload.array("files"), async (req, res) => {
-  console.log("file uploaded");
-});
+// router.post("/upload", upload.array("files"), async (req, res) => {
+//   console.log("file uploaded");
+// });
+router.post(
+  "/vendorAuth/upload",
+  uploadVendor.single("files"),
+  async (req, res) => {
+    // diskStorage.name;
+
+    console.log("file ");
+    res.status(200).send({
+      status_code: 200,
+      message: "File uploaded successfully",
+    });
+  }
+);
 
 module.exports = router;
