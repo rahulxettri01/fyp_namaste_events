@@ -33,9 +33,10 @@ router.post("/add_inventory", VerifyJWT, async (req, res) => {
   let category = req.user["category"];
 
   if (category == "Venue") {
-    connectInventoryDB.call();
-    existInventory = await venueModel.findOne({
-      venueName: vdata.venueName,
+    connectInventoryDB(async () => {
+      existInventory = await venueModel.findOne({
+        venueName: vdata.venueName,
+      });
     });
     console.log("vay", existInventory);
 
@@ -51,20 +52,24 @@ router.post("/add_inventory", VerifyJWT, async (req, res) => {
 
       const newVenue = new venueModel(vdata);
 
-      newVenue.save().then(() => {
-        console.log("success");
+      connectInventoryDB(async () => {
+        newVenue.save().then(() => {
+          console.log("success");
 
-        return res.status(200).send({
-          status_code: 200,
-          message: "Venue added successfully",
+          return res.status(200).send({
+            status_code: 200,
+            message: "Venue added successfully",
+          });
         });
       });
     }
   } else if (category == "Decoration") {
-    connectInventoryDB.call();
-    existInventory = await decoratorModel.findOne({
-      decoratorName: vdata.inventoryName,
+    connectInventoryDB(async () => {
+      existInventory = await decoratorModel.findOne({
+        decoratorName: vdata.inventoryName,
+      });
     });
+
     if (existInventory) {
       //    return res.status(400).send("User already exists. Please sign in");
       return res.status(400).json({
@@ -74,17 +79,20 @@ router.post("/add_inventory", VerifyJWT, async (req, res) => {
     } else {
       const newDecorator = new decoratorModel(vdata);
 
-      newDecorator.save().then(() => {
-        return res.status(200).send({
-          status_code: 200,
-          message: "Decorator added successfully",
+      connectInventoryDB(async () => {
+        newDecorator.save().then(() => {
+          return res.status(200).send({
+            status_code: 200,
+            message: "Decorator added successfully",
+          });
         });
       });
     }
   } else if (category == "Photography") {
-    connectInventoryDB.call();
-    existInventory = await photographyModel.findOne({
-      photographyName: vdata.inventoryName,
+    connectInventoryDB(async () => {
+      existInventory = await photographyModel.findOne({
+        photographyName: vdata.inventoryName,
+      });
     });
     if (existInventory) {
       //    return res.status(400).send("User already exists. Please sign in");
@@ -95,10 +103,12 @@ router.post("/add_inventory", VerifyJWT, async (req, res) => {
     } else {
       const newPhotographer = new photographyModel(vdata);
 
-      newPhotographer.save().then(() => {
-        return res.status(200).send({
-          status_code: 200,
-          message: "Photographer added successfully",
+      connectInventoryDB(async () => {
+        newPhotographer.save().then(() => {
+          return res.status(200).send({
+            status_code: 200,
+            message: "Photographer added successfully",
+          });
         });
       });
     }
@@ -108,8 +118,10 @@ router.post("/add_inventory", VerifyJWT, async (req, res) => {
 // GET API to fetch all venues
 router.get("/get_inventory", VerifyJWT, async (req, res) => {
   try {
-    connectInventoryDB.call();
-    const venues = await venueModel.find();
+    let venues = null;
+    connectInventoryDB(async () => {
+      venues = await venueModel.find();
+    });
 
     return res.status(200).json({
       success: true,

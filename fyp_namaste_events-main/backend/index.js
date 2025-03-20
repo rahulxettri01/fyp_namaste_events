@@ -16,6 +16,7 @@ const upload = multer({ dest: "uploads/" });
 const inventoryAction = require("./routes/inventoryActions");
 const userAuth = require("./routes/userAuthentication");
 const vendorAuth = require("./routes/VendorAuthentication");
+const vendorRoutes = require("./routes/vendor"); // Import the new vendor routes
 
 const superAdminRoutes = require("./routes/admin");
 
@@ -23,35 +24,7 @@ app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
 app.use("/vendor", vendorAuth);
 app.use("/superadmin", superAdminRoutes);
-
-// File upload endpoint for vendors
-// app.post(
-//   "/vendor/upload",
-//   upload.fields([{ name: "citizenship" }, { name: "pan" }]),
-//   async (req, res) => {
-//     try {
-//       const { citizenship, pan } = req.files;
-//       const vendorId = req.body.vendorId;
-
-//       const vendor = await vendorModel.findById(vendorId);
-//       if (!vendor) {
-//         return res.status(404).json({ message: "Vendor not found" });
-//       }
-
-//       vendor.citizenshipFilePath = citizenship[0].path;
-//       vendor.panFilePath = pan[0].path;
-//       await vendor.save();
-
-//       res.status(200).json({ message: "Files uploaded successfully" });
-//     } catch (err) {
-//       res.status(500).json({ message: err.message });
-//     }
-//   }
-// );
-
-// const { superAdminModel } = require("./models/superadmin");
-// const encrypt = require("bcrypt");
-// const { connectSuperAdminDB } = require("./Config/DBconfig");
+// app.use("/api", vendorRoutes); // Use the new vendor routes
 
 app.listen(PORT, async () => {
   console.log(`Connected to server at port ${PORT}`);

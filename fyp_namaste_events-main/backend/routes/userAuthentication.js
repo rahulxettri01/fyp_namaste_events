@@ -33,17 +33,17 @@ router.post("/sign_up", async (req, res) => {
   console.log("Endpoint hit");
   let duplicateEmail = null;
   if (udata.role == "Admin") {
-    connectInventoryDB.call();
-    duplicateEmail = await vendorModel.findOne({ email: udata.email });
-    connectInventoryDB.close();
+    connectInventoryDB(async () => {
+      duplicateEmail = await vendorModel.findOne({ email: udata.email });
+    });
   } else if (udata.role == "super Admin") {
-    connectSuperAdminDB.call();
-    duplicateEmail = await userModel.findOne({ email: udata.email });
-    connectSuperAdminDB.close();
+    connectSuperAdminDB(async () => {
+      duplicateEmail = await userModel.findOne({ email: udata.email });
+    });
   } else {
-    connectUserDB.call();
-    duplicateEmail = await userModel.findOne({ email: udata.email });
-    connectUserDB.close();
+    connectUserDB(async () => {
+      duplicateEmail = await userModel.findOne({ email: udata.email });
+    });
   }
   console.log("dub", duplicateEmail);
   if (duplicateEmail) {
@@ -71,13 +71,15 @@ router.post("/sign_up", async (req, res) => {
         });
         console.log("modl", newVendor);
 
-        await newVendor.save().then(() => {
-          console.log("succeded");
+        connectInventoryDB(async () => {
+          await newVendor.save().then(() => {
+            console.log("succeded");
 
-          res.status(200).send({
-            status_code: 200,
-            message: "Vendor registered successfully",
-            userDetails: udata,
+            res.status(200).send({
+              status_code: 200,
+              message: "Vendor registered successfully",
+              userDetails: udata,
+            });
           });
         });
       } else {
@@ -88,11 +90,13 @@ router.post("/sign_up", async (req, res) => {
           password: passwordEncrypted,
           role: udata.role,
         });
-        await newUser.save().then(() => {
-          res.status(200).send({
-            status_code: 200,
-            message: "User registered successfully",
-            userDetails: udata,
+        connectUserDB(async () => {
+          await newUser.save().then(() => {
+            res.status(200).send({
+              status_code: 200,
+              message: "User registered successfully",
+              userDetails: udata,
+            });
           });
         });
       }
@@ -116,14 +120,18 @@ router.post("/log_in", async (req, res) => {
 
   let existEmail = null;
   if (udata.role == "Admin") {
-    connectInventoryDB();
-    existEmail = await vendorModel.findOne({ email: udata.email });
+    await connectInventoryDB(async () => {
+      existEmail = await vendorModel.findOne({ email: udata.email });
+    });
+    console.log("new", existEmail);
   } else if (udata.role == "super admin") {
-    connectSuperAdminDB();
-    existEmail = await userModel.findOne({ email: udata.email });
+    await connectSuperAdminDB(async () => {
+      existEmail = await userModel.findOne({ email: udata.email });
+    });
   } else {
-    connectUserDB();
-    existEmail = await userModel.findOne({ email: udata.email });
+    await connectUserDB(async () => {
+      existEmail = await userModel.findOne({ email: udata.email });
+    });
   }
 
   console.log("dubeee", existEmail);

@@ -92,7 +92,7 @@ class Api {
       } else {
         // Error response: return JSON with error message
 
-        return {"message": "Server error: ${response.statusCode}"};
+        return {"message": "Server error: ${response.body}"};
 
       }
     } catch (e) {
@@ -158,6 +158,31 @@ class Api {
       }
     } catch (e) {
       print("Error fetching inventory: ${e.toString()}");
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getVendorsByStatus(String status) async {
+    var url = Uri.parse("${APIConstants.baseUrl}api/vendors/$status");
+    String? token = await APIConstants.getToken(); // Get the auth token
+
+    try {
+      var response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData['data']; // Return the vendors data list
+      } else {
+        return []; // Return empty list on failure
+      }
+    } catch (e) {
+      print("Error fetching vendors: ${e.toString()}");
       return [];
     }
   }

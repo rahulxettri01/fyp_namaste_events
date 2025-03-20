@@ -3,36 +3,45 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const connectUserDB = () => {
+const connectUserDB = async (callback) => {
   try {
-    mongoose.connect(process.env.DATABASE_User).then(() => {
+    await mongoose.connect(process.env.DATABASE_User).then(async () => {
       console.log("User DB connected");
+      await callback();
     });
   } catch (error) {
     console.error(`Error: ${error.message}`); // Log the error message
-    process.exit(1); // Exit process with failure code (1)
+  } finally {
+    await mongoose.connection.close();
+    console.log("User DB connection closed");
   }
 };
 
-const connectInventoryDB = () => {
+const connectInventoryDB = async (callback) => {
   try {
-    mongoose.connect(process.env.DATABASE_Vendor).then(() => {
+    await mongoose.connect(process.env.DATABASE_Vendor).then(async () => {
       console.log("Inventory DB connected");
+      await callback(); // Execute the passed database operation
     });
   } catch (error) {
     console.error(`Error: ${error.message}`); // Log the error message
-    process.exit(1); // Exit process with failure code (1)
+  } finally {
+    await mongoose.connection.close();
+    console.log("Inventory DB connection closed");
   }
 };
 
-const connectSuperAdminDB = () => {
+const connectSuperAdminDB = async (callback) => {
   try {
-    mongoose.connect(process.env.DATABASE_Super_Admin).then(() => {
+    await mongoose.connect(process.env.DATABASE_Super_Admin).then(async () => {
       console.log("Super Admin DB connected");
+      await callback();
     });
   } catch (error) {
     console.error(`Error: ${error.message}`); // Log the error message
-    process.exit(1); // Exit process with failure code (1)
+  } finally {
+    await mongoose.connection.close();
+    console.log("Super Admin DB connection closed");
   }
 };
 

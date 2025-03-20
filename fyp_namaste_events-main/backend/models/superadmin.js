@@ -8,6 +8,6 @@ const superAdminSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const superAdminModel = mongoose.model("superAdmin", superAdminSchema);
+const superAdminModel = mongoose.model("superAdmins", superAdminSchema);
 
 module.exports = { superAdminModel };

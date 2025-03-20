@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { vendorModel } = require("../models/vendor");
-const { connectAdminDB } = require("../Config/DBconfig");
+const { connectInventoryDB } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { uploadVendor, uploadUser } = require("../Config/multerConfig");
@@ -19,9 +19,11 @@ router.post("/sign_up", async (req, res) => {
     password: req.body.password,
   };
 
-  connectAdminDB.call();
+  let duplicateEmail = null;
+  connectInventoryDB(async () => {
+    duplicateEmail = await vendorModel.findOne({ email: vdata.email });
+  });
 
-  let duplicateEmail = await vendorModel.findOne({ email: vdata.email });
   if (duplicateEmail) {
     return res.status(400).json({
       status_code: 400,
@@ -38,11 +40,13 @@ router.post("/sign_up", async (req, res) => {
         password: passwordEncrypted,
       });
 
-      await newVendor.save().then(() => {
-        res.status(200).send({
-          status_code: 200,
-          message: "Vendor registered successfully",
-          vendorDetails: vdata,
+      connectInventoryDB(async () => {
+        await newVendor.save().then(() => {
+          res.status(200).send({
+            status_code: 200,
+            message: "Vendor registered successfully",
+            vendorDetails: vdata,
+          });
         });
       });
     } catch (err) {
@@ -58,9 +62,11 @@ router.post("/login", async (req, res) => {
     password: req.body.password,
   };
 
-  connectAdminDB.call();
+  let existEmail = null;
 
-  let existEmail = await vendorModel.findOne({ email: vdata.email });
+  connectInventoryDB(async () => {
+    existEmail = await vendorModel.findOne({ email: vdata.email });
+  });
   if (!existEmail) {
     return res.status(400).json({
       status_code: 400,

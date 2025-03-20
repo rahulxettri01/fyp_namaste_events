@@ -1,6 +1,6 @@
 const multer = require("multer");
 const path = require("path");
-const { connectAdminDB, connectUserDB } = require("../Config/DBconfig");
+const { connectInventoryDB, connectUserDB } = require("../Config/DBconfig");
 const { docImageModel } = require("../models/image");
 
 // Configure storage with unique filename using date-time
@@ -16,7 +16,6 @@ const storageVendor = multer.diskStorage({
     // Generate a unique filename: originalName_without_extension + timestamp + extension
     const uniqueName =
       path.basename(file.originalname, ext) + "-" + Date.now() + ext;
-    connectAdminDB.call();
     const details = req.user;
 
     const image = new docImageModel({
@@ -25,7 +24,9 @@ const storageVendor = multer.diskStorage({
       srcFrom: details["email"],
       type: "verification",
     });
-    await image.save().then(() => {});
+    connectInventoryDB(async () => {
+      await image.save().then(() => {});
+    });
     cb(null, uniqueName);
   },
 });
