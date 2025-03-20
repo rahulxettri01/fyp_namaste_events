@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/AddInventory.dart';
 
 import 'package:fyp_namaste_events/pages/SignUpPage.dart';
+import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:fyp_namaste_events/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import the SignUpPage widget
@@ -51,7 +52,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: AddInventoryPage(), // Set SignUpPage as the first screen
+      home: LoginPage(), // Set SignUpPage as the first screen
     );
   }
 }

@@ -2,13 +2,19 @@ const express = require("express");
 const router = express.Router();
 const { userModel } = require("../models/user");
 const { vendorModel } = require("../models/vendor");
-const { connectUserDB, connectAdminDB } = require("../Config/DBconfig");
+const {
+  connectUserDB,
+  connectInventoryDB,
+  connectSuperAdminDB,
+} = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const jwtExpiryMinute = 60;
 
 const userData = [];
+
+require("dotenv").config();
 
 // POST API to add signup details
 router.post("/sign_up", async (req, res) => {
@@ -27,15 +33,20 @@ router.post("/sign_up", async (req, res) => {
   console.log("Endpoint hit");
   let duplicateEmail = null;
   if (udata.role == "Admin") {
-    connectAdminDB.call();
+    connectInventoryDB.call();
     duplicateEmail = await vendorModel.findOne({ email: udata.email });
+    connectInventoryDB.close();
+  } else if (udata.role == "super Admin") {
+    connectSuperAdminDB.call();
+    duplicateEmail = await userModel.findOne({ email: udata.email });
+    connectSuperAdminDB.close();
   } else {
     connectUserDB.call();
     duplicateEmail = await userModel.findOne({ email: udata.email });
+    connectUserDB.close();
   }
   console.log("dub", duplicateEmail);
   if (duplicateEmail) {
-    //    return res.status(400).send("User already exists. Please sign in");
     return res.status(400).json({
       status_code: 400,
       message: "User already exists. Please login",
@@ -48,7 +59,6 @@ router.post("/sign_up", async (req, res) => {
       console.log("suc", passwordEncrypted);
       console.log("rol", udata.role);
       if (udata.role == "Admin") {
-        // connectAdminDB.call();
         let newVendor = new vendorModel({
           vendorName: udata.userName,
           email: udata.email,
@@ -66,12 +76,11 @@ router.post("/sign_up", async (req, res) => {
 
           res.status(200).send({
             status_code: 200,
-            message: "Vendor registered added successfully",
+            message: "Vendor registered successfully",
             userDetails: udata,
           });
         });
       } else {
-        // connectUserDB.call();
         let newUser = new userModel({
           userName: udata.userName,
           email: udata.email,
@@ -82,7 +91,7 @@ router.post("/sign_up", async (req, res) => {
         await newUser.save().then(() => {
           res.status(200).send({
             status_code: 200,
-            message: "user registered added successfully",
+            message: "User registered successfully",
             userDetails: udata,
           });
         });
@@ -103,23 +112,25 @@ router.post("/log_in", async (req, res) => {
   };
 
   userData.push(udata);
-  console.log("Endpoint hit");
+  console.log("Endpoint hit", udata);
 
   let existEmail = null;
   if (udata.role == "Admin") {
-    connectAdminDB.call();
+    connectInventoryDB();
     existEmail = await vendorModel.findOne({ email: udata.email });
+  } else if (udata.role == "super admin") {
+    connectSuperAdminDB();
+    existEmail = await userModel.findOne({ email: udata.email });
   } else {
-    connectUserDB.call();
+    connectUserDB();
     existEmail = await userModel.findOne({ email: udata.email });
   }
 
-  console.log("dub", existEmail);
+  console.log("dubeee", existEmail);
   if (!existEmail) {
-    //    return res.status(400).send("User already exists. Please sign in");
     return res.status(400).json({
       status_code: 400,
-      message: "User doesn't exists. Please sign up",
+      message: "User doesn't exist. Please sign up",
     });
   } else {
     try {
@@ -127,19 +138,13 @@ router.post("/log_in", async (req, res) => {
         udata.password,
         existEmail.password
       );
+
       if (!correctPassword) {
         console.log("inc pas");
         return res
           .status(400)
           .json({ status_code: 400, message: "Incorrect email or password" });
       }
-
-      // let tokenData = { id: existEmail._id, role: existEmail.role };
-      // const token = await UserService.generateToken(
-      //   tokenData,
-      //   "serectKey",
-      //   "1h"
-      // );
 
       const token = jwt.sign(
         {
@@ -151,22 +156,12 @@ router.post("/log_in", async (req, res) => {
         },
         "SECRET"
       );
-      // setup cookies in frontend imp
-      // res.json({ token, ...userModel._doc });
-
-      // res.cookie("token", token, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV !== "development",
-      //   sameSite: "strict",
-      //   role: existEmail.role,
-      //   maxAge: jwtExpiryMinute * 30,
-      // });
 
       if (existEmail.role == "User") {
         console.log("c pas u");
         return res.status(200).send({
           status_code: 200,
-          message: "user logged in successfully",
+          message: "User logged in successfully",
           role: existEmail.role,
           token: token,
         });
@@ -178,8 +173,15 @@ router.post("/log_in", async (req, res) => {
           role: existEmail.role,
           token: token,
         });
+      } else if (existEmail.role == "super admin") {
+        console.log("c pas SA");
+        return res.status(200).send({
+          status_code: 200,
+          message: "Super Admin logged in successfully",
+          role: existEmail.role,
+          token: token,
+        });
       }
-      console.log("last mai");
     } catch (err) {
       console.log("err mai");
       console.log(err);

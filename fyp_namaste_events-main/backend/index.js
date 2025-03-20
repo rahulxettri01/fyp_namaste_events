@@ -1,27 +1,28 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const multer = require("multer");
 const app = express();
 const PORT = 2000;
+
+// Middleware to parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const multer = require("multer");
-
-const venueData = [];
-
-//connect to mongoose
-mongoose.set("strictQuery", true);
 
 // Multer configuration for file uploads
 const upload = multer({ dest: "uploads/" });
 
-//Routes
-const venueAction = require("./routes/venueActions");
+// Routes
+const inventoryAction = require("./routes/inventoryActions");
 const userAuth = require("./routes/userAuthentication");
-const VendorAuth = require("./routes/VendorAuthentication");
+const vendorAuth = require("./routes/VendorAuthentication");
 
-app.use("/api", venueAction);
+const superAdminRoutes = require("./routes/admin");
+
+app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
-app.use("/vendor", VendorAuth);
+app.use("/vendor", vendorAuth);
+app.use("/superadmin", superAdminRoutes);
 
 // File upload endpoint for vendors
 // app.post(
@@ -30,7 +31,7 @@ app.use("/vendor", VendorAuth);
 //   async (req, res) => {
 //     try {
 //       const { citizenship, pan } = req.files;
-//       const vendorId = req.body.vendorId; // Assuming you send vendorId in the request body
+//       const vendorId = req.body.vendorId;
 
 //       const vendor = await vendorModel.findById(vendorId);
 //       if (!vendor) {
@@ -48,6 +49,21 @@ app.use("/vendor", VendorAuth);
 //   }
 // );
 
-app.listen(PORT, () => {
+// const { superAdminModel } = require("./models/superadmin");
+// const encrypt = require("bcrypt");
+// const { connectSuperAdminDB } = require("./Config/DBconfig");
+
+app.listen(PORT, async () => {
   console.log(`Connected to server at port ${PORT}`);
+  // const salt = await encrypt.genSalt(10);
+  // const passwordEncrypted = await encrypt.hash("superAdmin", salt);
+  // const newAdmin = new superAdminModel({
+  //   userName: "superAdmin",
+  //   email: "superAdmin@gmail.com",
+  //   password: passwordEncrypted,
+  // });
+  // connectSuperAdminDB.call();
+  // await newAdmin.save().then(() => {
+  //   console.log("SuperAdmin Created!!!");
+  // });
 });

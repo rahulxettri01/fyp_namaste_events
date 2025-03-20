@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fyp_namaste_events/pages/admin_panel.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
+import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
-
+import 'package:fyp_namaste_events/pages/AddInventory.dart';
 import 'dashboard.dart';
+ // Import Add Inventory Page
 
 class VerificationPage extends StatefulWidget {
-  final token;
-  const VerificationPage({@required this.token, super.key});
+  final String token;
+  const VerificationPage({required this.token, super.key});
 
   @override
   _VerificationPageState createState() => _VerificationPageState();
@@ -25,36 +27,22 @@ class _VerificationPageState extends State<VerificationPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    Map<String,dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
+
+    // Decode JWT Token
+    Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
     userStatus = jwtDecodedToken['status'];
     vendorType = jwtDecodedToken['category'];
 
-    if (userStatus == "verified"){
-      _redirectUser(vendorType);
+    // If user is verified, redirect to Add Inventory Page
+    if (userStatus == "verified") {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
+        );
+      });
     }
-
-  }
-
-  void _redirectUser(String vendorType) {
-    Widget nextScreen;
-
-    if (vendorType == "Venue") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
-      );
-    } else if (vendorType == "decorator") {
-      // nextScreen = DecoratorDashboard(token: widget.token);
-    } else {
-      // nextScreen = PhotographerDashboard(token: widget.token);
-    }
-
-    // Navigator.pushReplacement(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => nextScreen),
-    // );
   }
 
   // Function to pick multiple files
@@ -73,15 +61,24 @@ class _VerificationPageState extends State<VerificationPage> {
   Future<void> uploadFiles() async {
     if (selectedFiles.isNotEmpty) {
       try {
+        String? token = await APIConstants.getToken();
+
+        if (token == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Unauthorized: Please log in again.")),
+          );
+          return;
+        }
+
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://192.168.1.90:2000/vendor/vendorAuth/upload'), // Replace with your actual API URL
+          Uri.parse('${APIConstants.baseUrl}vendor/vendorAuth/upload'),
         );
 
-        // Add multiple files to the request
         for (var file in selectedFiles) {
           request.files.add(await http.MultipartFile.fromPath('files', file.path));
         }
+        request.headers['Authorization'] = 'Bearer $token';
 
         var response = await request.send();
 
@@ -91,9 +88,11 @@ class _VerificationPageState extends State<VerificationPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Files uploaded successfully!")),
           );
+
+          // Redirect to Vendor Dashboard
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token,)),
+            MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
           );
         } else {
           print('Failed to upload files: ${response.reasonPhrase}');
@@ -108,20 +107,20 @@ class _VerificationPageState extends State<VerificationPage> {
         );
       }
     } else {
-      print("Please select files before uploading.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select files before uploading")),
       );
     }
   }
+
   // Sign-out function
   void _signOut() {
-    // Navigate to login page and remove the current screen from stack
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,6 +203,8 @@ class _VerificationPageState extends State<VerificationPage> {
                 style: TextStyle(fontSize: 14, color: Colors.black),
               ),
             ),
+            const SizedBox(height: 10),
+
             // Sign-out button
             SizedBox(
               width: double.infinity,
@@ -226,7 +227,6 @@ class _VerificationPageState extends State<VerificationPage> {
     );
   }
 
-
   // File Picker UI
   Widget filePickerButton() {
     return GestureDetector(
@@ -245,7 +245,6 @@ class _VerificationPageState extends State<VerificationPage> {
           children: [
             const Text("Select Files", style: TextStyle(fontSize: 16, color: Colors.black54)),
             const SizedBox(height: 5),
-            // Display selected file names
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: selectedFileNames

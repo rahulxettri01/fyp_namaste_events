@@ -3,6 +3,7 @@ const router = express.Router();
 const { userModel } = require("../models/user");
 const { connectUserDB } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
+const VerifyJWT = require("../middleware/VerifyJET");
 const userData = [];
 
 // User login route (POST)

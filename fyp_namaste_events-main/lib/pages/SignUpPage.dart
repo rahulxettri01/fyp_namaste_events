@@ -40,7 +40,6 @@ class _SignUpPageState extends State<SignUpPage> {
           "password": controllerPassword.text,
           "role": selectedRole,
           "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
-
         };
 
         // Call the API and handle the response
@@ -117,7 +116,7 @@ class _SignUpPageState extends State<SignUpPage> {
         labelText: 'Select Role',
         border: OutlineInputBorder(),
       ),
-      items: ['User', 'Admin'].map((String value) {
+      items: ['User', 'Admin', 'Super Admin'].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -248,6 +247,14 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 16), // Spacing before login text
                 _loginText(), // Now added
+                if (errorMessage != null && errorMessage!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
               ],
             ),
           ),

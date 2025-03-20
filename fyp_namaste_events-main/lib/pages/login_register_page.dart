@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/dashboard.dart';
 import 'package:fyp_namaste_events/pages/home_page.dart';
 import 'package:fyp_namaste_events/pages/SignUpPage.dart';
-import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:fyp_namaste_events/pages/furtherMore_page.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
+import 'package:fyp_namaste_events/pages/AdminDahboardPage.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
-
-
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _controllerEmail = TextEditingController();
@@ -21,14 +22,14 @@ class _LoginPageState extends State<LoginPage> {
   bool isPasswordVisible = false;
   String? selectedRole; // New role selection variable
   late SharedPreferences prefs;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     initSharedPref();
   }
 
-  void initSharedPref() async{
+  void initSharedPref() async {
     prefs = await SharedPreferences.getInstance();
   }
 
@@ -36,7 +37,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       if (selectedRole == null || selectedRole!.isEmpty) {
         errorMessage = "Please select a role.";
-      } else if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
+      } else if (_controllerEmail.text.isEmpty ||
+          _controllerPassword.text.isEmpty) {
         errorMessage = "Please fill in all fields.";
       } else {
         var data = {
@@ -45,60 +47,104 @@ class _LoginPageState extends State<LoginPage> {
           "role": selectedRole,
         };
 
-        // Call the API and handle the response
-        Api.login(data).then((response) {
-          if (response != null ) { // imp: if email doesnot exit null is returned
-            int statusCode = response["status_code"];
-            print("roleeee");
-            String role = response["role"];
-            var newToken = response["token"];
-            print(newToken);
-            if (statusCode == 200) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Login successful! Welcome."),
-                  backgroundColor: Colors.green,
-                ),
+        if (selectedRole == "Super Admin") {
+          Api.loginAdmin(data).then((response) {
+            print("response");
+            print(response);
+            if (response != null) {
+              int statusCode = response["status_code"];
+              var newToken = response["token"];
+              if (statusCode == 200) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Login successful! Welcome."),
+                    backgroundColor: Colors.green,
+                  ),
+                );
 
-              );
-
-
-              prefs.setString("FrontToken", newToken);
-              if (role == "Admin"){
-                print("adminMa");
+                prefs.setString("FrontToken", newToken);
 
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) =>  VerificationPage(token: newToken,)),
-                  // MaterialPageRoute(builder: (context) => const LoginPage()),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          AdminDashboardPage(token: newToken)),
                 );
-              }else{
-                print("useMa");
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                );
+              } else {
+                setState(() {
+                  errorMessage =
+                      response["message"] ?? "Login failed. Try again.";
+                });
               }
+            }
+          });
+        } else {
+          // Call the API and handle the response
+          Api.login(data).then((response) {
+            if (response != null) {
+              // imp: if email does not exist null is returned
+              int statusCode = response["status_code"];
+              print("roleeee");
+              String role = response["role"];
+              var newToken = response["token"];
+              print(newToken);
+              if (statusCode == 200) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Login successful! Welcome."),
+                    backgroundColor: Colors.green,
+                  ),
+                );
 
+                prefs.setString("FrontToken", newToken);
+                if (role == "Admin") {
+                  print("adminMa");
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            VerificationPage(token: newToken)),
+                  );
+                } else if (role == "Super Admin") {
+                  print("superAdminMa");
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            AdminDashboardPage(token: newToken)),
+                  );
+                } else {
+                  print("useMa");
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
+                  );
+                }
+              } else {
+                setState(() {
+                  errorMessage =
+                      response["message"] ?? "Login failed. Try again.";
+                });
+              }
             } else {
               setState(() {
-                errorMessage = response["message"] ?? "Signup failed. Try again.";
+                errorMessage = "Unexpected response from server.";
               });
             }
-          } else {
+          }).catchError((error) {
             setState(() {
-              errorMessage = "Unexpected response from server.";
+              errorMessage = "Error occurred: ${error.toString()}";
             });
-          }
-        }).catchError((error) {
-          setState(() {
-            errorMessage = "Error occurred: ${error.toString()}";
           });
-        });
+        }
       }
     });
   }
-  Widget _entryField(String title, TextEditingController controller, {bool isPassword = false}) {
+
+  Widget _entryField(String title, TextEditingController controller,
+      {bool isPassword = false}) {
     return TextField(
       controller: controller,
       obscureText: isPassword && !isPasswordVisible,
@@ -107,15 +153,15 @@ class _LoginPageState extends State<LoginPage> {
         border: const OutlineInputBorder(),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(
-            isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-          ),
-          onPressed: () {
-            setState(() {
-              isPasswordVisible = !isPasswordVisible;
-            });
-          },
-        )
+                icon: Icon(
+                  isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    isPasswordVisible = !isPasswordVisible;
+                  });
+                },
+              )
             : null,
       ),
     );
@@ -128,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
         labelText: 'Select Role',
         border: OutlineInputBorder(),
       ),
-      items: ['User', 'Admin'].map((String value) {
+      items: ['User', 'Admin', 'Super Admin'].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),

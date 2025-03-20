@@ -6,6 +6,7 @@ const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { uploadVendor, uploadUser } = require("../Config/multerConfig");
 const { diskStorage } = require("multer");
+const VerifyJWT = require("../middleware/VerifyJWT");
 const jwtExpiryMinute = 60;
 
 const vendorData = [];
@@ -101,6 +102,7 @@ router.post("/login", async (req, res) => {
 // });
 router.post(
   "/vendorAuth/upload",
+  VerifyJWT,
   uploadVendor.single("files"),
   async (req, res) => {
     // diskStorage.name;

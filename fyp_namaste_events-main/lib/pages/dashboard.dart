@@ -1,149 +1,168 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/AddInventory.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
+
 import 'package:jwt_decoder/jwt_decoder.dart';
 
+import '../services/Api/api_authentication.dart';
+import 'InventoryDetailsPage.dart';
+
 class VendorDashboard extends StatefulWidget {
-  final token;
-  const VendorDashboard({@required this.token, super.key});
+  final String token;
+
+  const VendorDashboard({required this.token, super.key});
 
   @override
- _VendorDashboardState createState() =>  _VendorDashboardState();
+  _VendorDashboardState createState() => _VendorDashboardState();
 }
-class _VendorDashboardState extends State<VendorDashboard>{
+
+class _VendorDashboardState extends State<VendorDashboard> {
   late String userStatus;
+  late String vendorName;
+  List<dynamic> inventoryList = [];
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    Map<String,dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
-    userStatus = jwtDecodedToken['status'];
+    _decodeToken();
+    _fetchInventory();
+  }
+
+  void _decodeToken() {
+    try {
+      Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
+      userStatus = jwtDecodedToken['status'] ?? 'Unknown';
+      vendorName = jwtDecodedToken['vendorName'] ?? 'Unknown Vendor';
+    } catch (e) {
+      userStatus = 'Unknown';
+      vendorName = 'Unknown Vendor';
+    }
+  }
+
+  // Fetch Inventory from API
+  void _fetchInventory() async {
+    List<dynamic> data = await Api.getInventory();
+    setState(() {
+      inventoryList = data;
+    });
+  }
+
+  // Sign-out function
+  void _signOut() {
+    // Navigate to login page and remove the current screen from stack
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  }
+
+  // Function to navigate to different pages
+  void _navigateToPage(String page) async {
+    switch (page) {
+      case 'Dashboard':
+      // Navigate to the Dashboard page
+        break;
+      case 'Profile':
+      // Navigate to Profile page
+        break;
+      case 'Settings':
+      // Navigate to Settings page
+        break;
+      case 'Add Inventory':
+      // Navigate to Add Inventory page
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddInventoryPage(token: widget.token),
+          ),
+        );
+
+        // Check if the result indicates that an inventory item was added
+        if (result == true) {
+          _fetchInventory(); // Refresh inventory list
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (userStatus == "unverified"){
-
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Vendor Dashboard"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome to the Vendor Dashboard",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      body: inventoryList.isEmpty
+          ? const Center(
+        child: CircularProgressIndicator(),
+      ) // Show loading indicator
+          : ListView.builder(
+        itemCount: inventoryList.length,
+        itemBuilder: (context, index) {
+          final inventory = inventoryList[index];
+
+          return Card(
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: ListTile(
+              title: Text(
+                inventory['venueName'] ??
+                    inventory['decoratorName'] ??
+                    inventory['photographyName'] ??
+                    "Unknown Item", // Fallback if no name is found
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Your details are being verified. Please wait for confirmation.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                // Handle any further actions if needed
+              subtitle: Text("Price: ${inventory['price'] ?? 'N/A'}"),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        InventoryDetailsPage(inventory: inventory),
+                  ),
+                );
+                // Handle tapping on an item (optional)
               },
-              child: const Text("Check Verification Status"),
+            ),
+          );
+        },
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            UserAccountsDrawerHeader(
+              accountName: Text(vendorName),
+              accountEmail: Text('Status: $userStatus'),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 50),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.dashboard),
+              title: Text('Dashboard Home'),
+              onTap: () {
+                _navigateToPage('Dashboard');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.add),
+              title: Text('Add Inventory'),
+              onTap: () {
+                _navigateToPage('Add Inventory');
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.exit_to_app, color: Colors.red),
+              title: Text('Sign Out', style: TextStyle(color: Colors.red)),
+              onTap: _signOut,
             ),
           ],
         ),
       ),
     );
-    }else{
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Vendor Dashboard"),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.exit_to_app),
-              onPressed: () {
-                // Implement log out functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Logged out successfully!")),
-                );
-                // Delay to allow UI update before navigating
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                        (route) => false, // Clear navigation stack
-                  );
-                });
-                // You can navigate back to login screen or home page
-              },
-            ),
-          ],
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Welcome to the Vendor Dashboard",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Vendor Name: ",
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Venue Name: ",
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Venue Price: ",
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  // Navigate to a screen to manage the venue
-                  // Example: Navigate to edit venue screen
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const VenueManagementScreen(),
-                  //   ),
-                  // );
-                },
-                child: const Text("Manage Venue"),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Example: View the booking history of the venue
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const BookingHistoryScreen(),
-                  //   ),
-                  // );
-                },
-                child: const Text("View Booking History"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
   }
 }
