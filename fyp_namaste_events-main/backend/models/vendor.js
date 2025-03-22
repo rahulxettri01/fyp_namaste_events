@@ -14,4 +14,56 @@ const vendorSchema = new mongoose.Schema({
 
 const vendorModel = mongoose.model("vendorModels", vendorSchema);
 
-module.exports = { vendorModel };
+// const venueSchema = new mongoose.Schema({
+//   venueName: { type: String, required: true },
+//   address: { type: String, unique: true },
+//   price: { type: String },
+//   description: { type: String },
+//   accommodation: { type: Object, default: {} },
+//   status: { type: String, default: "avaiable" },
+//   image: { type: String }, // Add image field
+// });
+
+// // todo : add ratings
+
+// const venueModel = mongoose.model("venueModel", venueSchema);
+
+const venueSchema = new mongoose.Schema({
+  venueName: { type: String },
+  address: { type: String },
+  price: { type: String },
+  description: { type: String },
+  accommodation: { type: Object, default: {} },
+  avaiable: { type: String, default: "available" },
+  image: { type: String },
+});
+
+const venueModel = mongoose.model("venueModel", venueSchema);
+
+const photographySchema = new mongoose.Schema({
+  photographyName: { type: String },
+  address: { type: String, unique: true },
+  price: { type: String },
+  description: { type: String },
+  accommodation: { type: Object, default: {} },
+  status: { type: String, default: "avaiable" },
+});
+
+// todo : add ratings
+
+const photographyModel = mongoose.model("photographyModel", photographySchema);
+
+const decoratorSchema = new mongoose.Schema({
+  decoratorName: { type: String },
+  address: { type: String, unique: true },
+  price: { type: String },
+  description: { type: String },
+  accommodation: { type: Object, default: {} },
+  status: { type: String, default: "avaiable" },
+});
+
+// todo : add ratings
+
+const decoratorModel = mongoose.model("decoratorModel", decoratorSchema);
+
+module.exports = { vendorModel, decoratorModel, photographyModel, venueModel };

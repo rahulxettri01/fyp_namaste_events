@@ -17,13 +17,15 @@ const inventoryAction = require("./routes/inventoryActions");
 const userAuth = require("./routes/userAuthentication");
 const vendorAuth = require("./routes/VendorAuthentication");
 const vendorRoutes = require("./routes/vendor"); // Import the new vendor routes
-
+const imageRoutes = require("./routes/images"); // Import the new image routes
 const superAdminRoutes = require("./routes/admin");
 
 app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
 app.use("/vendor", vendorAuth);
 app.use("/superadmin", superAdminRoutes);
+app.use("/images", imageRoutes); // Use the new image routes
+
 // app.use("/api", vendorRoutes); // Use the new vendor routes
 
 app.listen(PORT, async () => {
