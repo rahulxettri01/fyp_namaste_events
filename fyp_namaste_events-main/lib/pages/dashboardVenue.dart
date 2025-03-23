@@ -41,10 +41,15 @@ class _VendorDashboardState extends State<VendorDashboard> {
 
   // Fetch Inventory from API
   void _fetchInventory() async {
-    List<dynamic> data = await Api.getInventory();
-    setState(() {
-      inventoryList = data;
-    });
+    try {
+      List<dynamic> data = await Api.getInventory();
+      print("Fetched data: $data"); // Add print statement
+      setState(() {
+        inventoryList = data;
+      });
+    } catch (e) {
+      print("Error fetching inventory: $e"); // Add error handling
+    }
   }
 
   // Sign-out function
@@ -79,6 +84,7 @@ class _VendorDashboardState extends State<VendorDashboard> {
 
         // Check if the result indicates that an inventory item was added
         if (result == true) {
+          print("Inventory item added");
           _fetchInventory(); // Refresh inventory list
         }
         break;

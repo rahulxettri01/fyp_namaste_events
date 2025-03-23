@@ -2,16 +2,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fyp_namaste_events/pages/admin_panel.dart';
+import 'package:fyp_namaste_events/pages/dashboardDecoration.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
+
 import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:fyp_namaste_events/pages/AddInventory.dart';
-import 'dashboard.dart';
- // Import Add Inventory Page
+
+import 'package:fyp_namaste_events/pages/pending_req_vendor.dart';
+import 'dashboardPhotography.dart';
+import 'dashboardVenue.dart';
 
 class VerificationPage extends StatefulWidget {
   final String token;
+
   const VerificationPage({required this.token, super.key});
 
   @override
@@ -33,13 +37,40 @@ class _VerificationPageState extends State<VerificationPage> {
     Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
     userStatus = jwtDecodedToken['status'];
     vendorType = jwtDecodedToken['category'];
-
-    // If user is verified, redirect to Add Inventory Page
+    print(vendorType);
+    // If user is verified, redirect to respective dashboard
     if (userStatus == "verified") {
+      if (vendorType == "Venue") {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VendorDashboard(token: widget.token)),
+          );
+        });
+      } else if (vendorType == "Photography") {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => PhotographyDashboard(token: widget.token)),
+          );
+        });
+      } else if (vendorType == "Decoration") {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => DecorationDashboard(token: widget.token)),
+          );
+        });
+      }
+    } else if (userStatus == "unverified") {
+      // If user is unverified, redirect to Pending Request Page
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
+          MaterialPageRoute(builder: (context) => PendingRequestVendor()),
         );
       });
     }
@@ -47,7 +78,8 @@ class _VerificationPageState extends State<VerificationPage> {
 
   // Function to pick multiple files
   Future<void> pickFiles() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    FilePickerResult? result =
+    await FilePicker.platform.pickFiles(allowMultiple: true);
 
     if (result != null) {
       setState(() {
@@ -76,7 +108,8 @@ class _VerificationPageState extends State<VerificationPage> {
         );
 
         for (var file in selectedFiles) {
-          request.files.add(await http.MultipartFile.fromPath('files', file.path));
+          request.files
+              .add(await http.MultipartFile.fromPath('files', file.path));
         }
         request.headers['Authorization'] = 'Bearer $token';
 
@@ -92,7 +125,8 @@ class _VerificationPageState extends State<VerificationPage> {
           // Redirect to Vendor Dashboard
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => VendorDashboard(token: widget.token)),
+            MaterialPageRoute(
+                builder: (context) => VendorDashboard(token: widget.token)),
           );
         } else {
           print('Failed to upload files: ${response.reasonPhrase}');
@@ -166,7 +200,8 @@ class _VerificationPageState extends State<VerificationPage> {
                 const Text("I agree with the "),
                 const Text(
                   "Terms of Service & Privacy Policy",
-                  style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                  style: TextStyle(
+                      color: Colors.blue, decoration: TextDecoration.underline),
                 ),
               ],
             ),
@@ -179,7 +214,8 @@ class _VerificationPageState extends State<VerificationPage> {
                 onPressed: isChecked ? uploadFiles : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: const Text(
@@ -212,7 +248,8 @@ class _VerificationPageState extends State<VerificationPage> {
                 onPressed: _signOut,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: const Text(
@@ -243,12 +280,15 @@ class _VerificationPageState extends State<VerificationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Select Files", style: TextStyle(fontSize: 16, color: Colors.black54)),
+            const Text("Select Files",
+                style: TextStyle(fontSize: 16, color: Colors.black54)),
             const SizedBox(height: 5),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: selectedFileNames
-                  .map((fileName) => Text(fileName, style: const TextStyle(fontSize: 14, color: Colors.black87)))
+                  .map((fileName) => Text(fileName,
+                  style:
+                  const TextStyle(fontSize: 14, color: Colors.black87)))
                   .toList(),
             ),
             const Icon(Icons.upload_file, color: Colors.purple),

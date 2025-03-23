@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
@@ -16,6 +17,33 @@ class VendorDetailsPage extends StatefulWidget {
 class _VendorDetailsPageState extends State<VendorDetailsPage> {
   bool isLoading = false;
   String errorMessage = '';
+  List<dynamic> images =[];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchImages();
+  }
+
+  Future<void> _fetchImages() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      images = await Api.fetchImagesByEmail(widget.vendor['email']);
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error: ${e.toString()}';
+      });
+    }
+  }
+
 
   Future<void> _updateVendorStatus(String status) async {
     setState(() {
@@ -25,13 +53,15 @@ class _VendorDetailsPageState extends State<VendorDetailsPage> {
 
     try {
       print(widget.vendor['_id']);
+      var url = Uri.parse('${APIConstants.baseUrl}vendor/update_vendor_status');
+      print(url);
       final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}superadmin/update_vendor'),
+        url,
         headers: {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"status": widget.vendor['status'], "id": widget.vendor['_id']}),
+        body: jsonEncode({"status": status, "id": widget.vendor['_id']}),  // Corrected line
       );
 
       if (response.statusCode == 200) {
@@ -88,6 +118,13 @@ class _VendorDetailsPageState extends State<VendorDetailsPage> {
                     title: Text("Status"),
                     subtitle: Text(widget.vendor['status']),
                   ),
+                  // Display images
+                  if (images.isNotEmpty)
+                    Column(
+                      children: images.map((image) {
+                        return Image.network('${APIConstants.baseUrl}${image['filePath']}/${image['fileName']}');
+                      }).toList(),
+                    ),
                   // Add more fields as needed
                 ],
               ),

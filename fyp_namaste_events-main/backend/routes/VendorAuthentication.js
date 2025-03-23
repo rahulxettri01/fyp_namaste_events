@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const { uploadVendor, uploadUser } = require("../Config/multerConfig");
 const { diskStorage } = require("multer");
 const VerifyJWT = require("../middleware/VerifyJWT");
+const { Ruleset } = require("firebase-admin/security-rules");
 const jwtExpiryMinute = 60;
 
 const vendorData = [];
@@ -120,5 +121,35 @@ router.post(
     });
   }
 );
+router.post("/update_vendor_status", (req, res) => {
+  console.log("aaaa");
+  const { id, status } = req.body;
 
+  console.log("new hit");
+
+  connectInventoryDB(async () => {
+    try {
+      const vendor = await vendorModel.findByIdAndUpdate(
+        id,
+        { status: status },
+        { new: true }
+      );
+
+      if (!vendor) {
+        return res.status(404).json({
+          status_code: 404,
+          message: "Vendor not found",
+        });
+      }
+
+      res.status(200).send({
+        status_code: 200,
+        message: "Vendor status updated successfully",
+        vendor,
+      });
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+  });
+});
 module.exports = router;
