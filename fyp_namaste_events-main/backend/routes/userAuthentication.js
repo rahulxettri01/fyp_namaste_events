@@ -35,18 +35,18 @@ router.post("/sign_up", async (req, res) => {
   };
 
   userData.push(udata);
-  console.log("Endpoint hit");
+  console.log("Endpoint dhit");
   let duplicateEmail = null;
   if (udata.role == "Admin") {
-    connectInventoryDB(async () => {
+    await connectInventoryDB(async () => {
       duplicateEmail = await vendorModel.findOne({ email: udata.email });
     });
   } else if (udata.role == "super Admin") {
-    connectSuperAdminDB(async () => {
+    await connectSuperAdminDB(async () => {
       duplicateEmail = await userModel.findOne({ email: udata.email });
     });
   } else {
-    connectUserDB(async () => {
+    await connectUserDB(async () => {
       duplicateEmail = await userModel.findOne({ email: udata.email });
     });
   }
@@ -76,38 +76,38 @@ router.post("/sign_up", async (req, res) => {
           panFilePath: "",
           category: udata.category,
         });
-        if (udata.category == "Venue") {
-          vendorType = new venueModel({
-            venueName: udata.userName,
-            address: udata.address,
-            price: udata.price,
-            description: udata.description,
-            accommodation: udata.accommodation,
-            status: udata.status,
-          });
-        } else if (udata.category == "Photography") {
-          vendorType = new photographyModel({
-            photographyName: udata.photographyName,
-            address: udata.address,
-            price: udata.price,
-            description: udata.description,
-            accommodation: udata.accommodation,
-            status: udata.status,
-          });
-        } else {
-          vendorType = new decoratorModel({
-            decoratorName: udata.decoratorName,
-            address: udata.address,
-            price: udata.price,
-            description: udata.description,
-            accommodation: udata.accommodation,
-            status: udata.status,
-          });
-        }
+        // if (udata.category == "Venue") {
+        //   vendorType = new venueModel({
+        //     venueName: udata.userName,
+        //     address: udata.address,
+        //     price: udata.price,
+        //     description: udata.description,
+        //     accommodation: udata.accommodation,
+        //     status: udata.status,
+        //   });
+        // } else if (udata.category == "Photography") {
+        //   vendorType = new photographyModel({
+        //     photographyName: udata.photographyName,
+        //     address: udata.address,
+        //     price: udata.price,
+        //     description: udata.description,
+        //     accommodation: udata.accommodation,
+        //     status: udata.status,
+        //   });
+        // } else {
+        //   vendorType = new decoratorModel({
+        //     decoratorName: udata.decoratorName,
+        //     address: udata.address,
+        //     price: udata.price,
+        //     description: udata.description,
+        //     accommodation: udata.accommodation,
+        //     status: udata.status,
+        //   });
+        // }
         console.log("modl", newVendor);
 
-        connectInventoryDB(async () => {
-          await vendorType.save();
+        await connectInventoryDB(async () => {
+          // await vendorType.save();
           await newVendor.save().then(() => {
             console.log("succeded");
 

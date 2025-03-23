@@ -9,6 +9,7 @@ const { diskStorage } = require("multer");
 const VerifyJWT = require("../middleware/VerifyJWT");
 const { Ruleset } = require("firebase-admin/security-rules");
 const jwtExpiryMinute = 60;
+const { docImageModel } = require("../models/image");
 
 const vendorData = [];
 // POST API to add vendor signup details
@@ -21,7 +22,7 @@ router.post("/sign_up", async (req, res) => {
   };
 
   let duplicateEmail = null;
-  connectInventoryDB(async () => {
+  await connectInventoryDB(async () => {
     duplicateEmail = await vendorModel.findOne({ email: vdata.email });
   });
 
@@ -41,7 +42,7 @@ router.post("/sign_up", async (req, res) => {
         password: passwordEncrypted,
       });
 
-      connectInventoryDB(async () => {
+      await connectInventoryDB(async () => {
         await newVendor.save().then(() => {
           res.status(200).send({
             status_code: 200,
@@ -121,39 +122,6 @@ router.post(
     });
   }
 );
-
-// Route to update vendor status
-// router.post("/update_vendor_status", VerifyJWT, async (req, res) => {
-//   const { id, status } = req.body;
-
-//   console.log("new hit");
-
-//   connectInventoryDB(async () => {
-//     try {
-//       const vendor = await vendorModel.findByIdAndUpdate(
-//         id,
-//         { status: status },
-//         { new: true }
-//       );
-
-//       if (!vendor) {
-//         return res.status(404).json({
-//           status_code: 404,
-//           message: "Vendor not found",
-//         });
-//       }
-
-//       res.status(200).send({
-//         status_code: 200,
-//         message: "Vendor status updated successfully",
-//         vendor,
-//       });
-//     } catch (err) {
-//       return res.status(400).json({ message: err.message });
-//     }
-//   });
-// });
-
 router.post("/update_vendor_status", (req, res) => {
   console.log("aaaa");
   const { id, status } = req.body;
@@ -185,4 +153,74 @@ router.post("/update_vendor_status", (req, res) => {
     }
   });
 });
+// GET API to fetch verification images for a vendor
+router.post("/get_verification_images", async (req, res) => {
+  const { email, type } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      status_code: 400,
+      message: "Email is required",
+    });
+  }
+
+  try {
+    let images = [];
+    await connectInventoryDB(async () => {
+      images = await docImageModel.find({
+        srcFrom: email,
+        type: type || "verification",
+      });
+    });
+    console.log("images", images);
+
+    // Transform images to include full URLs
+    const transformedImages = images.map((img) => ({
+      ...img.toObject(),
+      fullUrl: `${req.protocol}://${req.get("host")}/vendor/image/${
+        img.fileName
+      }`,
+    }));
+
+    return res.status(200).json({
+      status_code: 200,
+      message: "Images fetched successfully",
+      data: transformedImages,
+    });
+  } catch (err) {
+    console.error("Error fetching verification images:", err);
+    return res.status(500).json({
+      status_code: 500,
+      message: err.message,
+    });
+  }
+});
+
+// New endpoint to serve images directly
+const path = require("path");
+const fs = require("fs");
+
+router.get("/image/:filename", async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const imagePath = path.join(__dirname, "../uploads/vendor", filename);
+
+    // Check if file exists
+    if (fs.existsSync(imagePath)) {
+      return res.sendFile(imagePath);
+    } else {
+      return res.status(404).json({
+        status_code: 404,
+        message: "Image not found",
+      });
+    }
+  } catch (err) {
+    console.error("Error serving image:", err);
+    return res.status(500).json({
+      status_code: 500,
+      message: err.message,
+    });
+  }
+});
+
 module.exports = router;

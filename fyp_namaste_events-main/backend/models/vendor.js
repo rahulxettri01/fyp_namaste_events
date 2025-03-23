@@ -38,7 +38,13 @@ const venueSchema = new mongoose.Schema({
   image: { type: String },
 });
 
-const venueModel = mongoose.model("venueModel", venueSchema);
+// Look for this section in your vendor.js file
+// Change this:
+// const venueModel = mongoose.model("venue", venueSchema);
+
+// To this:
+const venueModel =
+  mongoose.models.venue || mongoose.model("venue", venueSchema);
 
 const photographySchema = new mongoose.Schema({
   photographyName: { type: String },
@@ -51,7 +57,10 @@ const photographySchema = new mongoose.Schema({
 
 // todo : add ratings
 
-const photographyModel = mongoose.model("photographyModel", photographySchema);
+// const photographyModel = mongoose.model("photographyModel", photographySchema);
+const photographyModel =
+  mongoose.models.photography ||
+  mongoose.model("photography", photographySchema);
 
 const decoratorSchema = new mongoose.Schema({
   decoratorName: { type: String },
@@ -64,6 +73,8 @@ const decoratorSchema = new mongoose.Schema({
 
 // todo : add ratings
 
-const decoratorModel = mongoose.model("decoratorModel", decoratorSchema);
+// const decoratorModel = mongoose.model("decoratorModel", decoratorSchema);
+const decoratorModel =
+  mongoose.models.decorator || mongoose.model("decorator", decoratorSchema);
 
 module.exports = { vendorModel, decoratorModel, photographyModel, venueModel };

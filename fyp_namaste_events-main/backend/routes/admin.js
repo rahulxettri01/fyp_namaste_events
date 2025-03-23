@@ -15,6 +15,7 @@ const jwtExpiryMinute = 60;
 
 // POST API for super admin login
 router.post("/log_in", async (req, res) => {
+  console.log("super admin hit");
   const { uEmail, password } = req.body;
 
   try {
@@ -24,6 +25,7 @@ router.post("/log_in", async (req, res) => {
       superAdmin = await superAdminModel.find();
       // todo : find by email
     });
+    console.log("admin det", superAdmin);
 
     await console.log("admin det", superAdmin);
     if (!superAdmin) {

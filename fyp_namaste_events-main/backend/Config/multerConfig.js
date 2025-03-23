@@ -17,6 +17,7 @@ const storageVendor = multer.diskStorage({
     const uniqueName =
       path.basename(file.originalname, ext) + "-" + Date.now() + ext;
     const details = req.user;
+    console.log("details", details);
 
     const image = new docImageModel({
       fileName: uniqueName,
@@ -24,8 +25,10 @@ const storageVendor = multer.diskStorage({
       srcFrom: details["email"],
       type: "verification",
     });
-    connectInventoryDB(async () => {
-      await image.save().then(() => {});
+    await connectInventoryDB(async () => {
+      await image.save().then(() => {
+        console.log("image uploaded");
+      });
     });
     cb(null, uniqueName);
   },
