@@ -20,8 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _controllerPassword = TextEditingController();
   String? errorMessage = '';
   bool isPasswordVisible = false;
-  String? selectedRole; // New role selection variable
-  String? selectedVendorType; // New vendor type selection variable
+  String? selectedRole;
   late SharedPreferences prefs;
 
   @override
@@ -38,14 +37,14 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       if (selectedRole == null || selectedRole!.isEmpty) {
         errorMessage = "Please select a role.";
-      } else if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
+      } else if (_controllerEmail.text.isEmpty ||
+          _controllerPassword.text.isEmpty) {
         errorMessage = "Please fill in all fields.";
       } else {
         var data = {
           "email": _controllerEmail.text,
           "password": _controllerPassword.text,
           "role": selectedRole,
-          "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
         };
 
         if (selectedRole == "Super Admin") {
@@ -64,15 +63,16 @@ class _LoginPageState extends State<LoginPage> {
                 );
 
                 prefs.setString("FrontToken", newToken);
-
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => AdminDashboardPage(token: newToken)),
+                      builder: (context) =>
+                          AdminDashboardPage(token: newToken)),
                 );
               } else {
                 setState(() {
-                  errorMessage = response["message"] ?? "Login failed. Try again.";
+                  errorMessage =
+                      response["message"] ?? "Login failed. Try again.";
                 });
               }
             }
@@ -102,7 +102,8 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => VerificationPage(token: newToken)),
+                        builder: (context) =>
+                            VerificationPage(token: newToken)),
                   );
                 } else if (role == "Super Admin") {
                   print("superAdminMa");
@@ -110,7 +111,8 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => AdminDashboardPage(token: newToken)),
+                        builder: (context) =>
+                            AdminDashboardPage(token: newToken)),
                   );
                 } else {
                   print("useMa");
@@ -121,7 +123,8 @@ class _LoginPageState extends State<LoginPage> {
                 }
               } else {
                 setState(() {
-                  errorMessage = response["message"] ?? "Login failed. Try again.";
+                  errorMessage =
+                      response["message"] ?? "Login failed. Try again.";
                 });
               }
             } else {
@@ -139,7 +142,8 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Widget _entryField(String title, TextEditingController controller, {bool isPassword = false}) {
+  Widget _entryField(String title, TextEditingController controller,
+      {bool isPassword = false}) {
     return TextField(
       controller: controller,
       obscureText: isPassword && !isPasswordVisible,
@@ -148,13 +152,15 @@ class _LoginPageState extends State<LoginPage> {
         border: const OutlineInputBorder(),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-          onPressed: () {
-            setState(() {
-              isPasswordVisible = !isPasswordVisible;
-            });
-          },
-        )
+                icon: Icon(isPasswordVisible
+                    ? Icons.visibility
+                    : Icons.visibility_off),
+                onPressed: () {
+                  setState(() {
+                    isPasswordVisible = !isPasswordVisible;
+                  });
+                },
+              )
             : null,
       ),
     );
@@ -176,33 +182,9 @@ class _LoginPageState extends State<LoginPage> {
       onChanged: (String? newValue) {
         setState(() {
           selectedRole = newValue;
-          selectedVendorType = null;
         });
       },
     );
-  }
-
-  Widget _vendorTypeDropdown() {
-    return selectedRole == "Admin"
-        ? DropdownButtonFormField<String>(
-      value: selectedVendorType,
-      decoration: const InputDecoration(
-        labelText: 'Select Vendor Type',
-        border: OutlineInputBorder(),
-      ),
-      items: ['Venue', 'Decoration', 'Photography'].map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedVendorType = newValue;
-        });
-      },
-    )
-        : Container();
   }
 
   Widget _registerText() {
@@ -252,8 +234,6 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16),
                 _roleDropdown(), // Added role dropdown here
                 const SizedBox(height: 16),
-                _vendorTypeDropdown(), // Added vendor type dropdown here
-                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _login,
                   style: ElevatedButton.styleFrom(
@@ -285,4 +265,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}/**/
+}

@@ -116,7 +116,7 @@ class _SignUpPageState extends State<SignUpPage> {
         labelText: 'Select Role',
         border: OutlineInputBorder(),
       ),
-      items: ['User', 'Admin', 'Super Admin'].map((String value) {
+      items: ['User', 'Admin'].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),

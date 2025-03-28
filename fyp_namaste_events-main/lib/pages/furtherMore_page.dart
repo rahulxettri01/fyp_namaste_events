@@ -50,6 +50,8 @@ class _VerificationPageState extends State<VerificationPage> {
           );
         });
       } else if (vendorType == "Photography") {
+        print(" photography redirectt");
+        print(widget.token);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Navigator.pushReplacement(
             context,

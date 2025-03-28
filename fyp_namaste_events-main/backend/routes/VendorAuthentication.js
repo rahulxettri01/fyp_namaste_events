@@ -4,12 +4,20 @@ const { vendorModel } = require("../models/vendor");
 const { connectInventoryDB } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { uploadVendor, uploadUser } = require("../Config/multerConfig");
+const {
+  uploadVendor,
+  uploadUser,
+  uploadInventory,
+} = require("../Config/multerConfig");
 const { diskStorage } = require("multer");
 const VerifyJWT = require("../middleware/VerifyJWT");
 const { Ruleset } = require("firebase-admin/security-rules");
 const jwtExpiryMinute = 60;
-const { docImageModel } = require("../models/image");
+const {
+  docImageModel,
+  photographyImageModel,
+  venueImageModel,
+} = require("../models/image");
 
 const vendorData = [];
 // POST API to add vendor signup details
@@ -116,13 +124,20 @@ router.post(
     // diskStorage.name;
 
     console.log("file ");
-    res.status(200).send({
-      status_code: 200,
-      message: "File uploaded successfully",
-    });
+    if (!req.imageStatus) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "Image upload failed",
+      });
+    } else {
+      res.status(200).send({
+        status_code: 200,
+        message: "File uploaded successfully",
+      });
+    }
   }
 );
-router.post("/update_vendor_status", (req, res) => {
+router.post("/update_vendor_status", VerifyJWT, (req, res) => {
   console.log("aaaa");
   const { id, status } = req.body;
 
@@ -154,7 +169,7 @@ router.post("/update_vendor_status", (req, res) => {
   });
 });
 // GET API to fetch verification images for a vendor
-router.post("/get_verification_images", async (req, res) => {
+router.post("/get_verification_images", VerifyJWT, async (req, res) => {
   const { email, type } = req.body;
 
   if (!email) {
@@ -164,23 +179,67 @@ router.post("/get_verification_images", async (req, res) => {
     });
   }
 
+  console.log("type", type);
+
   try {
     let images = [];
-    await connectInventoryDB(async () => {
-      images = await docImageModel.find({
-        srcFrom: email,
-        type: type || "verification",
+    if (type === "verification") {
+      await connectInventoryDB(async () => {
+        images = await docImageModel.find({
+          srcFrom: email,
+          type: type,
+        });
       });
-    });
+    } else if (type === "inventory") {
+      console.log("in inventory");
+
+      if (req.user.category === "Venue") {
+        await connectInventoryDB(async () => {
+          images = await venueImageModel.find({
+            srcFrom: email,
+            type: "venue",
+          });
+        });
+      } else if (req.user.category === "Photography") {
+        console.log("in Photo", email, type);
+        await connectInventoryDB(async () => {
+          images = await photographyImageModel.find({
+            srcFrom: email,
+            type: "photography",
+          });
+        });
+      } else {
+        await connectInventoryDB(async () => {
+          images = await decorationImageModel.find({
+            srcFrom: email,
+            type: "decoration",
+          });
+        });
+      }
+    }
+
     console.log("images", images);
 
     // Transform images to include full URLs
-    const transformedImages = images.map((img) => ({
-      ...img.toObject(),
-      fullUrl: `${req.protocol}://${req.get("host")}/vendor/image/${
-        img.fileName
-      }`,
-    }));
+    const transformedImages = images.map((img) => {
+      // Determine the correct path based on image type
+      let imagePath = "vendor";
+      if (type === "inventory") {
+        imagePath = "uploads/inventory";
+      } else if (type === "venue" || type === "decoration") {
+        imagePath = type;
+      }
+
+      return {
+        ...img.toObject(),
+        fullUrl: `${req.protocol}://${req.get("host")}/${imagePath}/${
+          img.fileName
+        }`,
+        type: img.type || type,
+        uploadDate: img.createdAt || new Date(),
+      };
+    });
+    console.log("transformedImages", transformedImages);
 
     return res.status(200).json({
       status_code: 200,
@@ -199,6 +258,7 @@ router.post("/get_verification_images", async (req, res) => {
 // New endpoint to serve images directly
 const path = require("path");
 const fs = require("fs");
+const { log } = require("console");
 
 router.get("/image/:filename", async (req, res) => {
   try {
@@ -222,5 +282,36 @@ router.get("/image/:filename", async (req, res) => {
     });
   }
 });
+
+router.post(
+  "/upload_inventory_images",
+  VerifyJWT,
+  uploadInventory.array("files"),
+  async (req, res) => {
+    const { type, inventoryName, address, price, description, accommodation } =
+      req.body;
+
+    // console.log("inventory upload details", req.user);
+    const data = req.user;
+    console.log("data", data);
+    console.log("data", req.imageStatus);
+
+    if (!req.imageStatus) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "Image upload failed",
+      });
+    }
+
+    // req.get({
+    //   url: `${process.env.BASE_URL}/api/add_inventory`,
+    //   method: "POST",
+    //   headers: req.headers,
+    // });
+    console.log(`${process.env.BASE_URL}/api/add_inventory`);
+
+    res.redirect(`${process.env.BASE_URL}/api/add_inventory`);
+  }
+);
 
 module.exports = router;

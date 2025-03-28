@@ -9,6 +9,8 @@ const VerifyJWT = (req, res, next) => {
       .status(401)
       .json({ message: "Access Denied! No token provided." });
   }
+  console.log("tokk", token);
+  console.log(token.split(" ")[1]);
 
   try {
     const decoded = jwt.verify(token.split(" ")[1], "SECRET"); // Verify token

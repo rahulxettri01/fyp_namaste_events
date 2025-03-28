@@ -35,6 +35,8 @@ class _VendorDetailsPageState extends State<VendorDetailsPage> {
     });
 
     try {
+      print("Fetching images...");
+      print("Token: ${widget.token}");
       var url =
           Uri.parse('${APIConstants.baseUrl}vendor/get_verification_images');
       final response = await http.post(

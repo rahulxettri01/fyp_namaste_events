@@ -36,6 +36,7 @@ const venueSchema = new mongoose.Schema({
   accommodation: { type: Object, default: {} },
   avaiable: { type: String, default: "available" },
   image: { type: String },
+  owner: { type: String },
 });
 
 // Look for this section in your vendor.js file
@@ -53,6 +54,7 @@ const photographySchema = new mongoose.Schema({
   description: { type: String },
   accommodation: { type: Object, default: {} },
   status: { type: String, default: "avaiable" },
+  owner: { type: String },
 });
 
 // todo : add ratings
@@ -69,6 +71,7 @@ const decoratorSchema = new mongoose.Schema({
   description: { type: String },
   accommodation: { type: Object, default: {} },
   status: { type: String, default: "avaiable" },
+  owner: { type: String },
 });
 
 // todo : add ratings

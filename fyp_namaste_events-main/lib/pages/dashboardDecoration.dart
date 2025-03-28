@@ -127,8 +127,11 @@ class _DecorationDashboardState extends State<DecorationDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              InventoryDetailsPage(inventory: inventory),
+                          builder: (context) => InventoryDetailsPage(
+                            inventory: inventory,
+                            token: widget.token,
+                          ),
+                          // InventoryDetailsPage(token: widget.token),
                         ),
                       );
                     },

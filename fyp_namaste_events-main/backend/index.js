@@ -2,9 +2,16 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const multer = require("multer");
-const path = require("path"); // Add path module
+const path = require("path");
+const bcrypt = require("bcrypt"); // Add bcrypt for password hashing
 const app = express();
 const PORT = 2000;
+
+// Load environment variables
+dotenv.config();
+
+// Import the SuperAdmin model
+const { superAdminModel } = require("./models/superadmin");
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
@@ -20,29 +27,61 @@ const upload = multer({ dest: "uploads/" });
 const inventoryAction = require("./routes/inventoryActions");
 const userAuth = require("./routes/userAuthentication");
 const vendorAuth = require("./routes/VendorAuthentication");
-const vendorRoutes = require("./routes/vendor"); // Import the new vendor routes
-const imageRoutes = require("./routes/images"); // Import the new image routes
+const vendorRoutes = require("./routes/vendor");
+const imageRoutes = require("./routes/images");
 const superAdminRoutes = require("./routes/admin");
 
 app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
 app.use("/vendor", vendorAuth);
 app.use("/superadmin", superAdminRoutes);
-app.use("/images", imageRoutes); // Use the new image routes
+app.use("/images", imageRoutes);
 
-// app.use("/api", vendorRoutes); // Use the new vendor routes
+// Function to initialize admin if not exists
+async function initializeAdmin() {
+  try {
+    console.log("Checking if admin exists in database...");
+    const adminExists = await superAdminModel.findOne({
+      email: process.env.ADMIN_EMAIL,
+    });
 
-app.listen(PORT, async () => {
-  console.log(`Connected to server at port ${PORT}`);
-  // const salt = await encrypt.genSalt(10);
-  // const passwordEncrypted = await encrypt.hash("superAdmin", salt);
-  // const newAdmin = new superAdminModel({
-  //   userName: "superAdmin",
-  //   email: "superAdmin@gmail.com",
-  //   password: passwordEncrypted,
-  // });
-  // connectSuperAdminDB.call();
-  // await newAdmin.save().then(() => {
-  //   console.log("SuperAdmin Created!!!");
-  // });
-});
+    if (!adminExists) {
+      console.log("Admin does not exist, creating one...");
+
+      const salt = await bcrypt.genSalt(10);
+      const passwordEncrypted = await bcrypt.hash(
+        process.env.ADMIN_PASSWORD,
+        salt
+      );
+
+      const newAdmin = new superAdminModel({
+        userName: "superAdmin",
+        email: process.env.ADMIN_EMAIL,
+        password: passwordEncrypted,
+      });
+
+      await newAdmin.save();
+      console.log("SuperAdmin created successfully!");
+    } else {
+      console.log("Admin already exists in the database.");
+    }
+  } catch (error) {
+    console.error("Error during admin initialization:", error.message);
+  }
+}
+
+// Connect to MongoDB and start server
+mongoose
+  .connect(process.env.DATABASE_Super_Admin)
+  .then(() => {
+    console.log("Connected to MongoDB database");
+    return initializeAdmin();
+  })
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err.message);
+  });

@@ -36,9 +36,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     try {
       var url = Uri.parse('${APIConstants.baseUrl}superadmin/get_vendors');
       print(url);
-      final response = await http.get(
-          url
-      );
+      final response = await http.get(url);
       print(response);
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -139,35 +137,38 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
-          : ListView.builder(
-        itemCount: vendors.length,
-        itemBuilder: (context, index) {
-          final vendor = vendors[index];
-          return ListTile(
-
-            title: Text(vendor['vendorName']),
-            subtitle: Text(vendor['email']),
-            trailing: ElevatedButton(
-              onPressed: () {
-                vendorJWT(vendor);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VendorDetailsPage(vendor: vendor, token: '',),
-                  ),
-                );
-              },
-              child: Text("Details"),
-            ),
-          );
-        },
-      ),
+              ? Center(child: Text(errorMessage))
+              : ListView.builder(
+                  itemCount: vendors.length,
+                  itemBuilder: (context, index) {
+                    final vendor = vendors[index];
+                    print("vendor");
+                    print(vendor);
+                    return ListTile(
+                      title: Text(vendor['vendorName']),
+                      subtitle: Text(vendor['email']),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          vendorJWT(vendor);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VendorDetailsPage(
+                                vendor: vendor,
+                                token: widget.token,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Text("Details"),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 
-   vendorJWT(vendor) {
-
+  vendorJWT(vendor) {
     // prefs.setString("CurrentVendor", );
   }
 }

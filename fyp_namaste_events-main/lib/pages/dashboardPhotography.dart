@@ -18,6 +18,7 @@ class PhotographyDashboard extends StatefulWidget {
 class _PhotographyDashboardState extends State<PhotographyDashboard> {
   late String userStatus;
   late String vendorName;
+  Map<String, dynamic> jwtde = {};
   List<dynamic> inventoryList = [];
 
   @override
@@ -26,6 +27,8 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
     // Decode JWT Token
     Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
     userStatus = jwtDecodedToken['status'];
+    jwtde = jwtDecodedToken;
+    vendorName = jwtDecodedToken['vendorName'] ?? 'Unknown Vendor';
 
     if (userStatus == "unverified") {
       // If user is unverified, redirect to Pending Request Page
@@ -113,7 +116,8 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
               itemCount: inventoryList.length,
               itemBuilder: (context, index) {
                 final inventory = inventoryList[index];
-
+                print("photo redirrrrrrr");
+                print(inventory);
                 return Card(
                   margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   child: ListTile(
@@ -127,8 +131,10 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              InventoryDetailsPage(inventory: inventory),
+                          builder: (context) => InventoryDetailsPage(
+                            inventory: inventory,
+                            token: widget.token,
+                          ),
                         ),
                       );
                     },

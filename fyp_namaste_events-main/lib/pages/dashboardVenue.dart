@@ -79,16 +79,16 @@ class _VendorDashboardState extends State<VendorDashboard> {
   void _navigateToPage(String page) async {
     switch (page) {
       case 'Dashboard':
-      // Navigate to the Dashboard page
+        // Navigate to the Dashboard page
         break;
       case 'Profile':
-      // Navigate to Profile page
+        // Navigate to Profile page
         break;
       case 'Settings':
-      // Navigate to Settings page
+        // Navigate to Settings page
         break;
       case 'Add Inventory':
-      // Navigate to Add Inventory page
+        // Navigate to Add Inventory page
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -115,39 +115,42 @@ class _VendorDashboardState extends State<VendorDashboard> {
       ),
       body: inventoryList.isEmpty
           ? const Center(
-        child: CircularProgressIndicator(),
-      ) // Show loading indicator
+              child: CircularProgressIndicator(),
+            ) // Show loading indicator
           : ListView.builder(
-        itemCount: inventoryList.length,
-        itemBuilder: (context, index) {
-          final inventory = inventoryList[index];
+              itemCount: inventoryList.length,
+              itemBuilder: (context, index) {
+                final inventory = inventoryList[index];
 
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: ListTile(
-              title: Text(
-                inventory['venueName'] ??
-                    inventory['decoratorName'] ??
-                    inventory['photographyName'] ??
-                    "Unknown Item", // Fallback if no name is found
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("Price: ${inventory['price'] ?? 'N/A'}"),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        InventoryDetailsPage(inventory: inventory),
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: ListTile(
+                    title: Text(
+                      inventory['venueName'] ??
+                          inventory['decoratorName'] ??
+                          inventory['photographyName'] ??
+                          "Unknown Item", // Fallback if no name is found
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("Price: ${inventory['price'] ?? 'N/A'}"),
+                    trailing: Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InventoryDetailsPage(
+                            inventory: inventory,
+                            token: widget.token,
+                          ),
+                          // InventoryDetailsPage(token: widget.token),
+                        ),
+                      );
+                      // Handle tapping on an item (optional)
+                    },
                   ),
                 );
-                // Handle tapping on an item (optional)
               },
             ),
-          );
-        },
-      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
