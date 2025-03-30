@@ -159,7 +159,7 @@ router.post("/log_in", async (req, res) => {
     await connectInventoryDB(async () => {
       existEmail = await vendorModel.findOne({ email: udata.email });
     });
-    console.log("new", existEmail);
+    await console.log("new", existEmail);
   } else if (udata.role == "super admin") {
     await connectSuperAdminDB(async () => {
       existEmail = await userModel.findOne({ email: udata.email });
@@ -189,7 +189,7 @@ router.post("/log_in", async (req, res) => {
           .status(400)
           .json({ status_code: 400, message: "Incorrect email or password" });
       }
-
+      console.log("user login role", existEmail.role);
       const token = jwt.sign(
         {
           id: existEmail._id,

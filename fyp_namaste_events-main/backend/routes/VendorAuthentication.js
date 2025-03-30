@@ -122,7 +122,7 @@ router.post("/login", async (req, res) => {
 router.post(
   "/vendorAuth/upload",
   VerifyJWT,
-  uploadVendor.single("files"),
+  uploadVendor.array("files"),
   async (req, res) => {
     // diskStorage.name;
 
@@ -187,10 +187,12 @@ router.post("/get_verification_images", VerifyJWT, async (req, res) => {
   try {
     let images = [];
     if (type === "verification") {
+      console.log("email", email);
+      console.log("type", req.user);
+
       await connectInventoryDB(async () => {
         images = await docImageModel.find({
           srcFrom: email,
-          type: type,
         });
       });
     } else if (type === "inventory") {
@@ -329,6 +331,39 @@ router.post("/get_verification_images", VerifyJWT, async (req, res) => {
             console.error("Error fetching inventory files:", error);
             // Continue with normal flow if there's an error
           }
+        }
+      }
+    } else if (type === "verification") {
+      // Extract the folder name from the first image's filePath if available
+      if (images.length > 0 && images[0].filePath) {
+        const folderPath = images[0].filePath;
+        // The filePath format is typically "uploads/inventory/folderName"
+        const folderName = folderPath.split("/").pop();
+        console.log("folderName", folderName);
+
+        try {
+          console.log(
+            "uurrll",
+            `http://${req.get("host")}/vendor/get_inventory_files`
+          );
+
+          let resp = await axios.post(
+            `http://${req.get("host")}/vendor/get_inventory_files`,
+            {
+              folderName: folderName,
+            }
+          );
+          if (resp.data && resp.data.status_code === 200) {
+            return res.status(200).json({
+              status_code: 200,
+              message: "Images fetched successfully",
+              data: resp.data.data,
+              folderPath: resp.data.folderPath,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching inventory files:", error);
+          // Continue with normal flow if there's an error
         }
       }
     }

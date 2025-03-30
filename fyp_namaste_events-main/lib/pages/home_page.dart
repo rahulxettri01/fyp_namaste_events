@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/utils/theme/custom_themes/text_theme.dart'; // Import your TTextTheme class
-import 'package:fyp_namaste_events/pages/login_register_page.dart'; // Import your LoginPage
+import 'package:fyp_namaste_events/pages/login_register_page.dart';
+
+import '../components/bottom_nav_bar.dart'; // Import your LoginPage
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -157,30 +159,7 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Store',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+     bottomNavigationBar: BottomNavBar(),
     );
   }
 }

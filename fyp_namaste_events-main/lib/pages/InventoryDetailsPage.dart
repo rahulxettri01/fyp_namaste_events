@@ -210,6 +210,7 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
                       style: const TextStyle(
                           fontSize: 22, fontWeight: FontWeight.bold),
                     ),
+
                     const SizedBox(height: 10),
                     Text("Address: ${inventory['address'] ?? 'N/A'}",
                         style: const TextStyle(fontSize: 18)),

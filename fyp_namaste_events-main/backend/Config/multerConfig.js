@@ -17,10 +17,29 @@ const {
 
 // Configure storage with unique filename using date-time
 const storageVendor = multer.diskStorage({
-  // connectAdminDB
   destination: (req, file, cb) => {
-    console.log("vn mul");
-    cb(null, "./uploads/vendor"); // Directory where files will be stored
+    const details = req.user;
+    let folderName = "";
+
+    if (!req.inventoryFolder) {
+      // Generate a unique folder name based on email and category
+      const timestamp = Date.now();
+      folderName = `${details.email.split("@")[0]}-${
+        details.category
+      }-${timestamp}`;
+      req.inventoryFolder = folderName;
+
+      // Create the directory if it doesn't exist
+      const fs = require("fs");
+      const inventoryPath = `./uploads/vendor/${folderName}`;
+      if (!fs.existsSync(inventoryPath)) {
+        fs.mkdirSync(inventoryPath, { recursive: true });
+        console.log(`Created inventory folder: ${inventoryPath}`);
+      }
+    } else {
+      folderName = req.inventoryFolder;
+    }
+    cb(null, `./uploads/vendor/${folderName}`); // Directory where files will be stored
   },
   filename: async (req, file, cb) => {
     // Extract file extension
@@ -31,19 +50,71 @@ const storageVendor = multer.diskStorage({
     const details = req.user;
     console.log("details", details);
 
+    // Initialize file counter if not already set
+    if (!req.fileCount) {
+      req.fileCount = 0;
+      req.alreadyExists = false;
+      req.savedImages = [];
+
+      // Check if verification docs already exist - only check once for the first file
+      await connectInventoryDB(async () => {
+        const dupImg = await docImageModel.findOne({
+          srcFrom: details.email,
+          type: details.category.toLowerCase(),
+        });
+        if (dupImg) {
+          console.log("Vendor doc already exists");
+          req.alreadyExists = true;
+        }
+      });
+    }
+
+    req.fileCount++;
+
+    // If docs already exist, reject all files
+    if (req.alreadyExists) {
+      console.log(
+        `Rejecting file ${req.fileCount}: Verification docs already exist`
+      );
+      return cb(new Error("Verification docs already exist"), false);
+    }
+
+    // Create appropriate image model based on category
     const image = new docImageModel({
       fileName: uniqueName,
-      filePath: "uploads/vendor",
-      srcFrom: details["email"],
-      type: "verification",
+      filePath: `uploads/vendor/${req.inventoryFolder}`,
+      srcFrom: details.email,
+      type: details.category.toLowerCase(),
     });
-    await connectInventoryDB(async () => {
-      await image.save().then(() => {
-        req.imageStatus = true;
-        console.log("image uploaded");
+
+    try {
+      // Save image to database with proper error handling
+      let savedImage;
+      await connectInventoryDB(async () => {
+        try {
+          savedImage = await image.save();
+          console.log(
+            `File ${req.fileCount} uploaded to database with ID: ${savedImage._id}`
+          );
+
+          req.imageStatus = true;
+        } catch (dbError) {
+          console.error("Database save error:", dbError);
+        }
       });
-    });
-    cb(null, uniqueName);
+      // Store saved image info
+      if (!req.savedImages) req.savedImages = [];
+      req.savedImages.push({
+        id: savedImage._id,
+        fileName: uniqueName,
+      });
+
+      // Always call the callback to ensure the file is saved to disk
+      cb(null, uniqueName);
+    } catch (error) {
+      console.error("Error in file upload process:", error);
+      cb(error, false);
+    }
   },
 });
 const storageUser = multer.diskStorage({
@@ -173,7 +244,6 @@ const storageInventory = multer.diskStorage({
       });
     } else if (details.category === "Decoration") {
       image = new decorationImageModel({
-        inventory: details.inventoryName,
         fileName: uniqueName,
         filePath: `uploads/inventory/${req.inventoryFolder}`,
         srcFrom: details.email,
