@@ -2,9 +2,14 @@ const express = require("express");
 const VerifyJWT = require("../middleware/VerifyJWT");
 const router = express.Router();
 const { connectInventoryDB } = require("../Config/DBconfig");
-const { venueModel } = require("../models/venue");
-const { decoratorModel } = require("../models/decoration");
-const { photographyModel } = require("../models/photography");
+// const { venueModel } = require("../models/venue");
+// const { decoratorModel } = require("../models/decoration");
+// const { photographyModel } = require("../models/photography");
+const {
+  photographyModel,
+  decoratorModel,
+  venueModel,
+} = require("../models/vendor");
 const { photographyImageModel, venueImageModel } = require("../models/image");
 const { uploadInventory } = require("../Config/multerConfig");
 
@@ -17,15 +22,22 @@ router.post(
   uploadInventory.array("files"),
   async (req, res) => {
     console.log("back hit");
+    if (req.alreadyExists) {
+      console.log("iiin already exists");
 
+      return res.status(400).json({
+        status_code: 400,
+        message: "Inventory already exists. Please check details",
+      });
+    }
     const vdata = {
+      owner: req.user["email"],
       inventoryName: req.body.inventoryName,
       address: req.body.address,
       price: req.body.price,
       description: req.body.description,
       accommodation: req.body.accommodation,
       image: req.file ? req.file.path : null,
-      owner: req.user["email"],
     };
 
     venueData.push(vdata);
@@ -101,6 +113,7 @@ router.post(
       } else {
         const newPhotographer = new photographyModel(vdata);
         newPhotographer.owner = req.user["email"];
+        newPhotographer["owner"] = req.user["email"];
         console.log("newPhotographer", newPhotographer);
 
         await connectInventoryDB(async () => {
@@ -123,13 +136,17 @@ router.get("/get_inventory", VerifyJWT, async (req, res) => {
     let inventories = [];
     await connectInventoryDB(async () => {
       if (req.user["category"] == "Venue") {
-        const venues = await venueModel.find();
+        const venues = await venueModel.find({ owner: req.user["email"] });
         inventories = [...venues];
       } else if (req.user["category"] == "Decoration") {
-        const decorators = await decoratorModel.find();
+        const decorators = await decoratorModel.find({
+          owner: req.user["email"],
+        });
         inventories = [...decorators];
       } else if (req.user["category"] == "Photography") {
-        const photographers = await photographyModel.find();
+        const photographers = await photographyModel.find({
+          owner: req.user["email"],
+        });
         inventories = [...photographers];
       }
     });

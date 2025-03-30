@@ -21,7 +21,7 @@ const photographyImgSchema = new mongoose.Schema({
   type: { type: String, required: true },
 });
 const decorationImgSchema = new mongoose.Schema({
-  fileName: { type: String, required: true },
+  fileName: { type: String },
   filePath: { type: String, required: true },
   srcFrom: { type: String, required: true },
   type: { type: String, required: true },

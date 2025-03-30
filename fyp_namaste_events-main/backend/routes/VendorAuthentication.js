@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const http = require("http");
+const axios = require("axios");
 const { vendorModel } = require("../models/vendor");
 const { connectInventoryDB } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
@@ -17,6 +19,7 @@ const {
   docImageModel,
   photographyImageModel,
   venueImageModel,
+  decorationImageModel,
 } = require("../models/image");
 
 const vendorData = [];
@@ -241,6 +244,95 @@ router.post("/get_verification_images", VerifyJWT, async (req, res) => {
     });
     console.log("transformedImages", transformedImages);
 
+    // In the get_verification_images endpoint
+    if (type === "inventory") {
+      if (req.user.category === "Decoration") {
+        // Extract the folder name from the first image's filePath if available
+        if (images.length > 0 && images[0].filePath) {
+          const folderPath = images[0].filePath;
+          // The filePath format is typically "uploads/inventory/folderName"
+          const folderName = folderPath.split("/").pop();
+
+          try {
+            let resp = await axios.post(
+              `http://${req.get("host")}/vendor/get_inventory_files`,
+              {
+                folderName: folderName,
+              }
+            );
+            console.log("Inventory files response:", resp.data);
+
+            // If successful, use the file details from the response
+            if (resp.data && resp.data.status_code === 200) {
+              return res.status(200).json({
+                status_code: 200,
+                message: "Images fetched successfully",
+                data: resp.data.data,
+                folderPath: resp.data.folderPath,
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching inventory files:", error);
+            // Continue with normal flow if there's an error
+          }
+        }
+      } else if (req.user.category === "Photography") {
+        // Extract the folder name from the first image's filePath if available
+        if (images.length > 0 && images[0].filePath) {
+          const folderPath = images[0].filePath;
+          // The filePath format is typically "uploads/inventory/folderName"
+          const folderName = folderPath.split("/").pop();
+
+          try {
+            let resp = await axios.post(
+              `http://${req.get("host")}/vendor/get_inventory_files`,
+              {
+                folderName: folderName,
+              }
+            );
+            if (resp.data && resp.data.status_code === 200) {
+              return res.status(200).json({
+                status_code: 200,
+                message: "Images fetched successfully",
+                data: resp.data.data,
+                folderPath: resp.data.folderPath,
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching inventory files:", error);
+            // Continue with normal flow if there's an error
+          }
+        }
+      } else if (req.user.category === "Venue") {
+        // Extract the folder name from the first image's filePath if available
+        if (images.length > 0 && images[0].filePath) {
+          const folderPath = images[0].filePath;
+          // The filePath format is typically "uploads/inventory/folderName"
+          const folderName = folderPath.split("/").pop();
+
+          try {
+            let resp = await axios.post(
+              `http://${req.get("host")}/vendor/get_inventory_files`,
+              {
+                folderName: folderName,
+              }
+            );
+            if (resp.data && resp.data.status_code === 200) {
+              return res.status(200).json({
+                status_code: 200,
+                message: "Images fetched successfully",
+                data: resp.data.data,
+                folderPath: resp.data.folderPath,
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching inventory files:", error);
+            // Continue with normal flow if there's an error
+          }
+        }
+      }
+    }
+
     return res.status(200).json({
       status_code: 200,
       message: "Images fetched successfully",
@@ -313,5 +405,136 @@ router.post(
     res.redirect(`${process.env.BASE_URL}/api/add_inventory`);
   }
 );
+
+// New endpoint to get all files in a specific inventory folder
+router.post("/get_inventory_files", async (req, res) => {
+  console.log("hit at get_inventory_files");
+
+  try {
+    const { folderName } = req.body;
+    console.log("hiinventory_files", folderName);
+
+    if (!folderName) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "Folder name is required",
+      });
+    }
+
+    const inventoryFolderPath = path.join(
+      __dirname,
+      "../uploads/inventory",
+      folderName
+    );
+
+    // Check if directory exists
+    if (!fs.existsSync(inventoryFolderPath)) {
+      return res.status(404).json({
+        status_code: 404,
+        message: "Inventory folder not found",
+      });
+    }
+
+    // Read all files in the directory
+    fs.readdir(inventoryFolderPath, (err, files) => {
+      if (err) {
+        console.error("Error reading directory:", err);
+        return res.status(500).json({
+          status_code: 500,
+          message: "Error reading inventory folder",
+        });
+      }
+
+      // Transform files to include full URLs
+      const fileDetails = files.map((fileName) => {
+        return {
+          fileName: fileName,
+          fullUrl: `${req.protocol}://${req.get(
+            "host"
+          )}/uploads/inventory/${folderName}/${fileName}`,
+          uploadDate: fs.statSync(path.join(inventoryFolderPath, fileName))
+            .mtime,
+        };
+      });
+
+      return res.status(200).json({
+        status_code: 200,
+        message: "Files retrieved successfully",
+        data: fileDetails,
+        folderPath: `/uploads/inventory/${folderName}`,
+      });
+    });
+  } catch (err) {
+    console.error("Error getting inventory files:", err);
+    return res.status(500).json({
+      status_code: 500,
+      message: err.message,
+    });
+  }
+});
+
+// Alternative endpoint that gets files based on inventory ID or vendor email
+router.post("/get_inventory_images", VerifyJWT, async (req, res) => {
+  try {
+    const { email, category, inventoryId } = req.body;
+
+    if (!email || !category) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "Email and category are required",
+      });
+    }
+
+    let images = [];
+
+    // Find images based on category
+    if (category === "Venue") {
+      await connectInventoryDB(async () => {
+        images = await venueImageModel.find({
+          srcFrom: email,
+          ...(inventoryId && { inventoryId }),
+        });
+      });
+    } else if (category === "Photography") {
+      await connectInventoryDB(async () => {
+        images = await photographyImageModel.find({
+          srcFrom: email,
+          ...(inventoryId && { inventoryId }),
+        });
+      });
+    } else if (category === "Decoration") {
+      await connectInventoryDB(async () => {
+        images = await decorationImageModel.find({
+          srcFrom: email,
+          ...(inventoryId && { inventoryId }),
+        });
+      });
+    }
+    console.log("imageddddddds", images);
+
+    // Transform images to include full URLs
+    const transformedImages = images.map((img) => {
+      return {
+        ...img.toObject(),
+        fullUrl: `${req.protocol}://${req.get("host")}/${img.filePath}/${
+          img.fileName
+        }`,
+        uploadDate: img._id.getTimestamp(),
+      };
+    });
+
+    return res.status(200).json({
+      status_code: 200,
+      message: "Inventory images retrieved successfully",
+      data: transformedImages,
+    });
+  } catch (err) {
+    console.error("Error getting inventory images:", err);
+    return res.status(500).json({
+      status_code: 500,
+      message: err.message,
+    });
+  }
+});
 
 module.exports = router;

@@ -84,6 +84,8 @@ class _AddInventoryPageState extends State<AddInventoryPage> {
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
+      print("Response : $response ");
+      print("Response Body: $responseBody");
       if (response.statusCode == 200) {
         setState(() {
           isUploading = false;

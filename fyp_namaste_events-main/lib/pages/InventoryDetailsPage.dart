@@ -106,6 +106,23 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
     }
   }
 
+  Future<void> getImageFiles(folderName) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${APIConstants.baseUrl}vendor/get_inventory_files'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode(
+            {'email': email, 'type': "inventory", "folderName": "$folderName"}),
+      );
+      print("ResponseForImagesFromFolder: ${response.body}");
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
   Future<void> fetchImages() async {
     try {
       // Determine the email from the inventory data
@@ -142,10 +159,13 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
           'type': "inventory",
         }),
       );
-      print("Response: ${response.body}");
+      // print("Response: ${response.body}");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("Response aayo lol: ${data}");
+        print("Response aayo lol: ${data['data']}");
+        // getImageFiles(data['data']['filePath']);
+
+        print("imgeUrl: ${data['data'][0]['fullUrl']}");
         setState(() {
           images = data['data'] ?? [];
           isLoading = false;
@@ -212,7 +232,7 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
                       Column(
                         children: images.map((image) {
                           return Image.network(
-                            '${APIConstants.baseUrl}uploads/inventory/${image['fileName']}',
+                            '${image['fullUrl']}',
                             height: 300,
                             fit: BoxFit.contain,
                           );
