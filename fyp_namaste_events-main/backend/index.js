@@ -30,12 +30,14 @@ const vendorAuth = require("./routes/VendorAuthentication");
 const vendorRoutes = require("./routes/vendor");
 const imageRoutes = require("./routes/images");
 const superAdminRoutes = require("./routes/admin");
+const inventoryRoutes = require("./routes/inventory"); // New route added
 
 app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
 app.use("/vendor", vendorAuth);
 app.use("/superadmin", superAdminRoutes);
 app.use("/images", imageRoutes);
+app.use("/inventory", inventoryRoutes); // New route added
 
 // Function to initialize admin if not exists
 async function initializeAdmin() {

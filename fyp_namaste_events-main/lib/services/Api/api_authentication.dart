@@ -30,7 +30,8 @@ class Api {
     }
   }
 
-  static Future<Map<String, dynamic>> login(Map<String, dynamic> udata) async {
+  static Future<Map<String, dynamic>>
+  login(Map<String, dynamic> udata) async {
     var url = Uri.parse("${APIConstants.baseUrl}auth/log_in");
     var token = APIConstants.getToken();
     debugPrint("Request URL: $url");
