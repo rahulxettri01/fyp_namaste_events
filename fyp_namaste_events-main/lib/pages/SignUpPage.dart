@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
@@ -86,6 +87,16 @@ class _SignUpPageState extends State<SignUpPage> {
       decoration: InputDecoration(
         labelText: title,
         border: const OutlineInputBorder(),
+        fillColor: Colors.white.withOpacity(0.8),
+        filled: true,
+        prefixIcon: Icon(
+          isPassword || isConfirmPassword ? Icons.lock : 
+          title == "Email" ? Icons.email :
+          title == "Name" ? Icons.person :
+          title == "Phone Number" ? Icons.phone : 
+          Icons.text_fields,
+          color: Colors.grey,
+        ),
         suffixIcon: isPassword || isConfirmPassword
             ? IconButton(
           icon: Icon(
@@ -115,6 +126,8 @@ class _SignUpPageState extends State<SignUpPage> {
       decoration: const InputDecoration(
         labelText: 'Select Role',
         border: OutlineInputBorder(),
+        fillColor: Colors.white70,
+        filled: true,
       ),
       items: ['User', 'Admin'].map((String value) {
         return DropdownMenuItem<String>(
@@ -138,6 +151,12 @@ class _SignUpPageState extends State<SignUpPage> {
       decoration: const InputDecoration(
         labelText: 'Select Vendor Type',
         border: OutlineInputBorder(),
+        fillColor: Colors.white70,
+        filled: true,
+        prefixIcon: Icon(
+          Icons.business,
+          color: Colors.grey,
+        ),
       ),
       items: ['Venue', 'Decoration', 'Photography'].map((String value) {
         return DropdownMenuItem<String>(
@@ -157,17 +176,26 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _termsAndConditions() {
     return Row(
       children: [
-        Checkbox(
-          value: isTermsAccepted,
-          onChanged: (value) {
-            setState(() {
-              isTermsAccepted = value!;
-            });
-          },
+        Transform.scale(
+          scale: 1.2,
+          child: Checkbox(
+            value: isTermsAccepted,
+            onChanged: (value) {
+              setState(() {
+                isTermsAccepted = value!;
+              });
+            },
+            activeColor: Colors.black,
+            checkColor: Colors.white,
+          ),
         ),
         const Flexible(
           child: Text(
             "I agree with the Terms of Service & Privacy Policy",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
         ),
       ],
@@ -188,7 +216,7 @@ class _SignUpPageState extends State<SignUpPage> {
           },
           child: const Text(
             "Log in",
-            style: TextStyle(color: Colors.blue),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -199,65 +227,89 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+        child: Stack(
+          children: [
+            Image.asset(
+              'assets/login.JPG',
+              fit: BoxFit.cover,
+              height: double.infinity,
+              width: double.infinity,
+            ),
+            Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.3))
+            ),
+            Column(
               children: [
+                const SizedBox(height: 40),
                 const Text(
                   "Join us to start searching",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24, 
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   '"Turning Plans into Perfect Moments!"',
-                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                  style: TextStyle(fontSize: 16, color: Colors.black),
                 ),
-                const SizedBox(height: 16),
-                _entryField("Name", controllerName),
-                const SizedBox(height: 16),
-                _entryField("Email", controllerEmail),
-                const SizedBox(height: 16),
-                _entryField("Phone Number", controllerPhone),
-                const SizedBox(height: 16),
-                _entryField("Password", controllerPassword, isPassword: true),
-                const SizedBox(height: 16),
-                _entryField("Confirm Password", controllerConfirmPassword, isConfirmPassword: true),
-                const SizedBox(height: 16),
-                _roleDropdown(),
-                const SizedBox(height: 16),
-                _vendorTypeDropdown(),
-                const SizedBox(height: 16),
-                _termsAndConditions(),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _signUp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 20),
+                          _entryField("Name", controllerName),
+                          const SizedBox(height: 16),
+                          _entryField("Email", controllerEmail),
+                          const SizedBox(height: 16),
+                          _entryField("Phone Number", controllerPhone),
+                          const SizedBox(height: 16),
+                          _entryField("Password", controllerPassword, isPassword: true),
+                          const SizedBox(height: 16),
+                          _entryField("Confirm Password", controllerConfirmPassword, isConfirmPassword: true),
+                          const SizedBox(height: 16),
+                          _roleDropdown(),
+                          const SizedBox(height: 16),
+                          _vendorTypeDropdown(),
+                          const SizedBox(height: 16),
+                          _termsAndConditions(),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _signUp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Sign up',
+                              style: TextStyle(fontSize: 16, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _loginText(),
+                          if (errorMessage != null && errorMessage!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                errorMessage!,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Sign up',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
                 ),
-                const SizedBox(height: 16), // Spacing before login text
-                _loginText(), // Now added
-                if (errorMessage != null && errorMessage!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

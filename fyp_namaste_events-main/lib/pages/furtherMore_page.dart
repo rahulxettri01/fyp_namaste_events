@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:fyp_namaste_events/pages/admin_panel.dart';
+
 import 'package:fyp_namaste_events/pages/dashboardDecoration.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 
@@ -170,103 +171,118 @@ class _VerificationPageState extends State<VerificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFFE3F2FD)],
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: Stack(
           children: [
-            const Text(
-              "Furthermore details",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 5),
-            const Text(
-              '"Turning Plans into Perfect Moments!"',
-              style: TextStyle(fontSize: 14, color: Colors.blueAccent),
-            ),
-            const SizedBox(height: 30),
+            // Changed background image to furthermore.JPG
+            Image.asset('assets/furthermore.JPG',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity),
+            Positioned.fill(
+                child: BackdropFilter(
+              filter: ImageFilter.blur(
+                  sigmaX: 5, sigmaY: 5), // Reduced blur intensity
+              child: Container(color: Colors.black.withOpacity(0.3)),
+            )),
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Furthermore details",
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      '"Turning Plans into Perfect Moments!"',
+                      style: TextStyle(fontSize: 14, color: Colors.blueAccent),
+                    ),
+                    const SizedBox(height: 30),
 
-            filePickerButton(), // File Picker Button
-            const SizedBox(height: 20),
+                    filePickerButton(), // File Picker Button
+                    const SizedBox(height: 20),
 
-            // Checkbox for agreeing to Terms & Conditions
-            Row(
-              children: [
-                Checkbox(
-                  value: isChecked,
-                  activeColor: Colors.purple,
-                  onChanged: (value) {
-                    setState(() {
-                      isChecked = value!;
-                    });
-                  },
-                ),
-                const Text("I agree with the "),
-                const Text(
-                  "Terms of Service & Privacy Policy",
-                  style: TextStyle(
-                      color: Colors.blue, decoration: TextDecoration.underline),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                    // Checkbox for agreeing to Terms & Conditions
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isChecked,
+                          activeColor: Colors.purple,
+                          onChanged: (value) {
+                            setState(() {
+                              isChecked = value!;
+                            });
+                          },
+                        ),
+                        const Text("I agree with the "),
+                        const Text(
+                          "Terms of Service & Privacy Policy",
+                          style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-            // Upload Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isChecked ? uploadFiles : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  "For verification",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+                    // Upload Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isChecked ? uploadFiles : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "For verification",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-            // Navigate to Login Page
-            GestureDetector(
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-              child: const Text(
-                "Have an account? Log in",
-                style: TextStyle(fontSize: 14, color: Colors.black),
-              ),
-            ),
-            const SizedBox(height: 10),
+                    // Navigate to Login Page
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                        );
+                      },
+                      child: const Text(
+                        "Have an account? Log in",
+                        style: TextStyle(fontSize: 14, color: Colors.black),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
 
-            // Sign-out button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _signOut,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  "Sign Out",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                    // Sign-out button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _signOut,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Sign Out",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

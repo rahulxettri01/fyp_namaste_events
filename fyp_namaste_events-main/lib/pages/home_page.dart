@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/vendor_detail_page.dart';
 import 'package:fyp_namaste_events/utils/theme/custom_themes/text_theme.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import '../components/bottom_nav_bar.dart';
@@ -95,56 +96,70 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         itemCount: venues.length,
                         itemBuilder: (context, index) {
-                          return Container(
-                            width: 180, // Fixed width for each card
-                            margin: const EdgeInsets.only(right: 12),
-                            child: Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(10)),
-                                      child: venues[index]['images'] != null &&
-                                              venues[index]['images'].isNotEmpty
-                                          ? Image.network(
-                                              venues[index]['images'][0]
-                                                      ['fullUrl'] ??
-                                                  '',
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return Container(
-                                                  color: Colors.grey.shade300,
-                                                  child: const Icon(
-                                                      Icons.image_not_supported,
-                                                      size: 40),
-                                                );
-                                              },
-                                            )
-                                          : Container(
-                                              color: Colors.grey.shade300,
-                                              child: const Icon(Icons.home,
-                                                  size: 40),
-                                            ),
-                                    ),
+                          return GestureDetector(
+                            onTap: () {
+                              // Navigate to vendor detail page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VendorDetailPage(
+                                    vendorData: venues[index],
+                                    vendorType: 'venue',
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      venues[index]['venueName'],
-                                      style: textTheme.bodyMedium,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 180, // Fixed width for each card
+                              margin: const EdgeInsets.only(right: 12),
+                              child: Card(
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(
+                                            top: Radius.circular(10)),
+                                        child: venues[index]['images'] != null &&
+                                                venues[index]['images'].isNotEmpty
+                                            ? Image.network(
+                                                venues[index]['images'][0]
+                                                        ['fullUrl'] ??
+                                                    '',
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (context, error, stackTrace) {
+                                                  return Container(
+                                                    color: Colors.grey.shade300,
+                                                    child: const Icon(
+                                                        Icons.image_not_supported,
+                                                        size: 40),
+                                                  );
+                                                },
+                                              )
+                                            : Container(
+                                                color: Colors.grey.shade300,
+                                                child: const Icon(Icons.home,
+                                                    size: 40),
+                                              ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        venues[index]['venueName'],
+                                        style: textTheme.bodyMedium,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -161,22 +176,35 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         itemCount: photographers.length,
                         itemBuilder: (context, index) {
-                          return Container(
-                            width: 180, // Fixed width for each card
-                            margin: const EdgeInsets.only(right: 12),
-                            child: Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(10)),
-                                      child: photographers[index]['images'] !=
+                          return GestureDetector(
+                            onTap: () {
+                              // Navigate to vendor detail page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VendorDetailPage(
+                                    vendorData: photographers[index],
+                                    vendorType: 'photographer',
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 180, // Fixed width for each card
+                              margin: const EdgeInsets.only(right: 12),
+                              child: Card(
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(
+                                            top: Radius.circular(10)),
+                                        child: photographers[index]['images'] !=
                                                   null &&
                                               photographers[index]['images']
                                                   .isNotEmpty
@@ -216,7 +244,7 @@ class _HomePageState extends State<HomePage> {
                                 ],
                               ),
                             ),
-                          );
+                          ));
                         },
                       ),
                     ),
@@ -230,22 +258,35 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         itemCount: decorations.length,
                         itemBuilder: (context, index) {
-                          return Container(
-                            width: 180, // Fixed width for each card
-                            margin: const EdgeInsets.only(right: 12),
-                            child: Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(10)),
-                                      child: decorations[index]['images'] !=
+                          return GestureDetector(
+                            onTap: () {
+                              // Navigate to vendor detail page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VendorDetailPage(
+                                    vendorData: decorations[index],
+                                    vendorType: 'decorator',
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 180, // Fixed width for each card
+                              margin: const EdgeInsets.only(right: 12),
+                              child: Card(
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(
+                                            top: Radius.circular(10)),
+                                        child: decorations[index]['images'] !=
                                                   null &&
                                               decorations[index]['images']
                                                   .isNotEmpty
@@ -285,7 +326,7 @@ class _HomePageState extends State<HomePage> {
                                 ],
                               ),
                             ),
-                          );
+                          ));
                         },
                       ),
                     ),
@@ -304,6 +345,7 @@ Widget _buildHorizontalScrollWithButtons(
   String Function(dynamic) nameGetter,
   dynamic Function(dynamic) imagesGetter,
   IconData fallbackIcon,
+  String vendorType,
 ) {
   final textTheme = Theme.of(context).brightness == Brightness.dark
       ? TTextTheme.darkTextTheme
@@ -323,53 +365,67 @@ Widget _buildHorizontalScrollWithButtons(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
             itemBuilder: (context, index) {
-              return Container(
-                width: 180,
-                margin: const EdgeInsets.only(right: 12),
-                child: Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(10)),
-                          child: imagesGetter(items[index]) != null &&
-                                  imagesGetter(items[index]).isNotEmpty
-                              ? Image.network(
-                                  imagesGetter(items[index])[0]['fullUrl'] ??
-                                      '',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey.shade300,
-                                      child: const Icon(
-                                          Icons.image_not_supported,
-                                          size: 40),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  color: Colors.grey.shade300,
-                                  child: Icon(fallbackIcon, size: 40),
-                                ),
-                        ),
+              return GestureDetector(
+                onTap: () {
+                  // Navigate to vendor detail page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VendorDetailPage(
+                        vendorData: items[index],
+                        vendorType: vendorType,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          nameGetter(items[index]),
-                          style: textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 180,
+                  margin: const EdgeInsets.only(right: 12),
+                  child: Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(10)),
+                            child: imagesGetter(items[index]) != null &&
+                                    imagesGetter(items[index]).isNotEmpty
+                                ? Image.network(
+                                    imagesGetter(items[index])[0]['fullUrl'] ??
+                                        '',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(
+                                            Icons.image_not_supported,
+                                            size: 40),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: Colors.grey.shade300,
+                                    child: Icon(fallbackIcon, size: 40),
+                                  ),
+                          ),
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            nameGetter(items[index]),
+                            style: textTheme.bodyMedium,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
