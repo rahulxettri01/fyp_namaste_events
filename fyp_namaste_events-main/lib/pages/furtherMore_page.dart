@@ -10,7 +10,6 @@ import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-import 'package:fyp_namaste_events/pages/pending_req_vendor.dart';
 import 'dashboardPhotography.dart';
 import 'dashboardVenue.dart';
 

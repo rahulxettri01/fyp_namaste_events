@@ -70,141 +70,225 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home Page', style: textTheme.headlineSmall),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
+        title: Text('Namaste Events', style: textTheme.headlineSmall),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => signOut(context), // Sign out on button click
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Implement search functionality
+            },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'signout') {
+                signOut(context);
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'Sign Out': 'signout'}
+                  .entries
+                  .map((entry) => PopupMenuItem<String>(
+                        value: entry.value,
+                        child: Text(entry.key),
+                      ))
+                  .toList();
+            },
           ),
         ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Venues in your city', style: textTheme.headlineSmall),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 220, // Fixed height for the horizontal list
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: venues.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to vendor detail page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VendorDetailPage(
-                                    vendorData: venues[index],
-                                    vendorType: 'venue',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 180, // Fixed width for each card
-                              margin: const EdgeInsets.only(right: 12),
-                              child: Card(
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(
-                                            top: Radius.circular(10)),
-                                        child: venues[index]['images'] != null &&
-                                                venues[index]['images'].isNotEmpty
-                                            ? Image.network(
-                                                venues[index]['images'][0]
-                                                        ['fullUrl'] ??
-                                                    '',
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (context, error, stackTrace) {
-                                                  return Container(
-                                                    color: Colors.grey.shade300,
-                                                    child: const Icon(
-                                                        Icons.image_not_supported,
-                                                        size: 40),
-                                                  );
-                                                },
-                                              )
-                                            : Container(
-                                                color: Colors.grey.shade300,
-                                                child: const Icon(Icons.home,
-                                                    size: 40),
-                                              ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        venues[index]['venueName'],
-                                        style: textTheme.bodyMedium,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Venues in your city section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Venues in your city',
+                            style: textTheme.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            // View all venues
+                          },
+                          child: Text(
+                            'View All',
+                            style: TextStyle(color: Colors.purple),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Venues Horizontal List
+                  SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: venues.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorDetailPage(
+                                  vendorData: venues[index],
+                                  vendorType: 'venue',
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Photographer for you',
-                        style: textTheme.headlineSmall),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 220, // Fixed height for the horizontal list
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: photographers.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to vendor detail page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VendorDetailPage(
-                                    vendorData: photographers[index],
-                                    vendorType: 'photographer',
+                            );
+                          },
+                          child: Container(
+                            width: 180,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Card(
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(10)),
+                                      child: venues[index]['images'] != null &&
+                                              venues[index]['images'].isNotEmpty
+                                          ? Image.network(
+                                              venues[index]['images'][0]
+                                                      ['fullUrl'] ??
+                                                  '',
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey.shade300,
+                                                  child: const Icon(
+                                                      Icons.image_not_supported,
+                                                      size: 40),
+                                                );
+                                              },
+                                            )
+                                          : Container(
+                                              color: Colors.grey.shade300,
+                                              child: const Icon(Icons.home,
+                                                  size: 40),
+                                            ),
+                                    ),
                                   ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          venues[index]['venueName'] ??
+                                              'Unknown Venue',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          venues[index]['address'] ??
+                                              'Location',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        // Star rating row removed
+                                        Text(
+                                          'Rs ${venues[index]['price'] ?? '1000'} per plate',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Photographer for you
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Photographer for you',
+                            style: textTheme.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            // View all photographers
+                          },
+                          child: Text(
+                            'View All',
+                            style: TextStyle(color: Colors.purple),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Photographers Horizontal List
+                  SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: photographers.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorDetailPage(
+                                  vendorData: photographers[index],
+                                  vendorType: 'photographer',
                                 ),
-                              );
-                            },
-                            child: Container(
-                              width: 180, // Fixed width for each card
-                              margin: const EdgeInsets.only(right: 12),
-                              child: Card(
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(
-                                            top: Radius.circular(10)),
-                                        child: photographers[index]['images'] !=
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 180,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Card(
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(10)),
+                                      child: photographers[index]['images'] !=
                                                   null &&
                                               photographers[index]['images']
                                                   .isNotEmpty
@@ -213,6 +297,7 @@ class _HomePageState extends State<HomePage> {
                                                       ['fullUrl'] ??
                                                   '',
                                               fit: BoxFit.cover,
+                                              width: double.infinity,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
                                                 return Container(
@@ -233,60 +318,106 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      photographers[index]['photographyName'],
-                                      style: textTheme.bodyMedium,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          photographers[index]
+                                                  ['photographyName'] ??
+                                              'Unknown',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          photographers[index]['address'] ??
+                                              'Location',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        Text(
+                                          'Rs ${photographers[index]['price'] ?? '50,000'} per Event',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ));
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 20),
-                    Text('Decoration for events',
-                        style: textTheme.headlineSmall),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 220, // Fixed height for the horizontal list
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: decorations.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to vendor detail page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VendorDetailPage(
-                                    vendorData: decorations[index],
-                                    vendorType: 'decorator',
-                                  ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Decoration for events
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Decoration for events',
+                            style: textTheme.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            // View all decorations
+                          },
+                          child: Text(
+                            'View All',
+                            style: TextStyle(color: Colors.purple),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Decorations Horizontal List
+                  SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: decorations.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorDetailPage(
+                                  vendorData: decorations[index],
+                                  vendorType: 'decorator',
                                 ),
-                              );
-                            },
-                            child: Container(
-                              width: 180, // Fixed width for each card
-                              margin: const EdgeInsets.only(right: 12),
-                              child: Card(
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(
-                                            top: Radius.circular(10)),
-                                        child: decorations[index]['images'] !=
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 180,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Card(
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(10)),
+                                      child: decorations[index]['images'] !=
                                                   null &&
                                               decorations[index]['images']
                                                   .isNotEmpty
@@ -295,6 +426,7 @@ class _HomePageState extends State<HomePage> {
                                                       ['fullUrl'] ??
                                                   '',
                                               fit: BoxFit.cover,
+                                              width: double.infinity,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
                                                 return Container(
@@ -315,23 +447,48 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      decorations[index]['decoratorName'],
-                                      style: textTheme.bodyMedium,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          decorations[index]['decoratorName'] ??
+                                              'Unknown',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          decorations[index]['address'] ??
+                                              'Location',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        Text(
+                                          'Rs ${decorations[index]['price'] ?? '45,000'} per event',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ));
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
       bottomNavigationBar: BottomNavBar(),

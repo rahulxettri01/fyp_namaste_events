@@ -1,8 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/AddInventory.dart';
+import 'package:fyp_namaste_events/pages/AdminDahboardPage.dart';
 
 import 'package:fyp_namaste_events/pages/SignUpPage.dart';
+import 'package:fyp_namaste_events/pages/dashboardDecoration.dart';
+import 'package:fyp_namaste_events/pages/home_page.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:fyp_namaste_events/pages/splashScreen.dart';
 import 'package:fyp_namaste_events/providers/user_provider.dart';

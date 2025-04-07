@@ -23,16 +23,163 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
   Map<String, dynamic> inventory = {};
   List<dynamic> images = [];
   bool isLoading = true;
+  bool isEditing = false;
   String errorMessage = '';
   var email = '';
+
+  // Controllers for editable fields
+  late TextEditingController nameController;
+  late TextEditingController priceController;
+  late TextEditingController addressController;
+  late TextEditingController descriptionController;
+
   @override
   void initState() {
     super.initState();
     inventory = widget.inventory;
     Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
     email = jwtDecodedToken['email'];
+
+    // Initialize controllers with current values
+    nameController =
+        TextEditingController(text: inventory['photographyName'] ?? '');
+    priceController =
+        TextEditingController(text: inventory['price']?.toString() ?? '');
+    addressController = TextEditingController(text: inventory['address'] ?? '');
+    descriptionController =
+        TextEditingController(text: inventory['description'] ?? '');
+
     fetchImages();
-    // fetchInventoryData();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    priceController.dispose();
+    addressController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> updateInventory() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      // Prepare the updated data based on inventory type
+      final Map<String, dynamic> updatedData =
+          {}; // Explicitly declare as Map<String, dynamic>
+
+      if (inventory.containsKey('venueName')) {
+        updatedData['venueName'] = nameController.text;
+      } else if (inventory.containsKey('decoratorName')) {
+        updatedData['decoratorName'] = nameController.text;
+      } else if (inventory.containsKey('photographyName')) {
+        updatedData['photographyName'] = nameController.text;
+      }
+
+      updatedData['price'] = priceController.text;
+      updatedData['address'] = addressController.text;
+      updatedData['description'] = descriptionController.text;
+      updatedData['owner'] = email; // Add owner email for backend verification
+
+      // Print the updated data to console for debugging
+      print("Updating inventory with ID: ${inventory['_id']}");
+      print("Updated data: $updatedData");
+
+      // Use the API service to update
+      final result = await Api.updateInventory(inventory['_id'], updatedData);
+
+      print("Update result: $result");
+
+      if (result['success'] == true) {
+        // Update local state with new data
+        setState(() {
+          inventory = {
+            ...inventory,
+            ...updatedData,
+          };
+          isEditing = false;
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Inventory updated successfully')),
+        );
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Update failed')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _deleteInventory() async {
+    bool confirm = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Confirm Delete'),
+            content: Text('Are you sure you want to delete this item?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirm) return;
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      // Print the inventory ID for debugging
+      print("Deleting inventory with ID: ${inventory['_id']}");
+      
+      // Use the API service to delete
+      final result = await Api.deleteInventory(inventory['_id']);
+      
+      print("Delete result: $result");
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Inventory deleted successfully')),
+        );
+        Navigator.pop(context, true); // Return to previous screen with refresh flag
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Delete failed')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
   }
 
   Future<void> fetchInventoryData() async {
@@ -186,17 +333,49 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine the name field based on inventory type
     String inventoryName = inventory['venueName'] ??
         inventory['decoratorName'] ??
         inventory['photographyName'] ??
         "Unknown Inventory";
-    print("in photo each");
-    print(inventory);
-    print(widget.token);
-    print("in photo each");
+
     return Scaffold(
-      appBar: AppBar(title: Text("$inventoryName Details")),
+      appBar: AppBar(
+        title: Text("$inventoryName Details"),
+        actions: [
+          if (!isEditing)
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  isEditing = true;
+                });
+              },
+            ),
+          if (isEditing)
+            IconButton(
+              icon: Icon(Icons.save),
+              onPressed: updateInventory,
+            ),
+          if (isEditing)
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  isEditing = false;
+                  // Reset controllers to original values
+                  nameController.text = inventory['photographyName'] ?? '';
+                  priceController.text = inventory['price']?.toString() ?? '';
+                  addressController.text = inventory['address'] ?? '';
+                  descriptionController.text = inventory['description'] ?? '';
+                });
+              },
+            ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: _deleteInventory,
+          ),
+        ],
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -205,26 +384,53 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      inventoryName,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-
-                    const SizedBox(height: 10),
-                    Text("Address: ${inventory['address'] ?? 'N/A'}",
-                        style: const TextStyle(fontSize: 18)),
-                    const SizedBox(height: 10),
-                    Text("Price: ${inventory['price'] ?? 'N/A'}",
-                        style:
-                            const TextStyle(fontSize: 18, color: Colors.green)),
-                    const SizedBox(height: 10),
-                    Text("Status: ${inventory['status'] ?? 'Unknown'}",
-                        style: TextStyle(
-                            fontSize: 18,
-                            color: inventory['status'] == 'available'
-                                ? Colors.green
-                                : Colors.red)),
+                    if (!isEditing) ...[
+                      Text(
+                        inventoryName,
+                        style: const TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Text("Address: ${inventory['address'] ?? 'N/A'}",
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 10),
+                      Text("Price: ${inventory['price'] ?? 'N/A'}",
+                          style: const TextStyle(
+                              fontSize: 18, color: Colors.green)),
+                      const SizedBox(height: 10),
+                      Text("Status: ${inventory['status'] ?? 'Unknown'}",
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: inventory['status'] == 'available'
+                                  ? Colors.green
+                                  : Colors.red)),
+                      const SizedBox(height: 10),
+                      Text("Description: ${inventory['description'] ?? 'N/A'}",
+                          style: const TextStyle(fontSize: 18)),
+                    ],
+                    if (isEditing) ...[
+                      TextFormField(
+                        controller: nameController,
+                        decoration: InputDecoration(labelText: 'Name'),
+                      ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: priceController,
+                        decoration: InputDecoration(labelText: 'Price'),
+                        keyboardType: TextInputType.number,
+                      ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: addressController,
+                        decoration: InputDecoration(labelText: 'Address'),
+                      ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: descriptionController,
+                        decoration: InputDecoration(labelText: 'Description'),
+                        maxLines: 3,
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     Text("Images:",
                         style: const TextStyle(
@@ -238,9 +444,7 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
                             fit: BoxFit.contain,
                           );
                         }).toList(),
-                      )
-                    // Rest of the UI remains similar but using inventoryData instead of widget.inventory
-                    // ...
+                      ),
                   ],
                 ),
               ),

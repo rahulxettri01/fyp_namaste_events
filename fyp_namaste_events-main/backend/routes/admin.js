@@ -69,21 +69,137 @@ router.get("/get_vendors", async (req, res) => {
   });
 });
 
-// router.get("get_vendors", async (req, res) => {
-//   console.log("get vend");
+// New endpoint to get all vendors
+router.get("/get_all_vendors", async (req, res) => {
+  console.log("Getting all vendors");
+  let data = [];
+  try {
+    await connectInventoryDB(async () => {
+      data = await vendorModel.find();
+    });
+    
+    return res.status(200).send({
+      status_code: 200,
+      message: "All vendors retrieved successfully",
+      data: data,
+    });
+  } catch (error) {
+    console.error("Error fetching all vendors:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching vendors",
+      error: error.message
+    });
+  }
+});
 
-//   let data = null;
-//   connectSuperAdminDB(async () => {
-//     data = vendorModel.find({ status: "unverified" });
-//   });
-//   console.log("all", data);
+// New endpoint to get verified vendors
+router.get("/get_verified_vendors", async (req, res) => {
+  console.log("Getting verified vendors");
+  let data = [];
+  try {
+    await connectInventoryDB(async () => {
+      data = await vendorModel.find({ status: "verified" });
+    });
+    
+    return res.status(200).send({
+      status_code: 200,
+      message: "All verified vendors retrieved successfully",
+      data: data,
+    });
+  } catch (error) {
+    console.error("Error fetching verified vendors:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching verified vendors",
+      error: error.message
+    });
+  }
+});
 
-//   return res.status(200).send({
-//     status_code: 200,
-//     message: "All unverified vendors retrived successfully",
-//     data: data,
-//   });
-// });
+// New endpoint to get rejected vendors
+router.get("/get_rejected_vendors", async (req, res) => {
+  console.log("Getting rejected vendors");
+  let data = [];
+  try {
+    await connectInventoryDB(async () => {
+      data = await vendorModel.find({ status: "rejected" });
+    });
+    
+    return res.status(200).send({
+      status_code: 200,
+      message: "All rejected vendors retrieved successfully",
+      data: data,
+    });
+  } catch (error) {
+    console.error("Error fetching rejected vendors:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching rejected vendors",
+      error: error.message
+    });
+  }
+});
+
+// Add verify vendor endpoint
+router.put("/verify_vendor/:id", async (req, res) => {
+  const vendorId = req.params.id;
+  console.log("Verifying vendor with ID:", vendorId);
+  
+  try {
+    let updatedVendor = null;
+    await connectInventoryDB(async () => {
+      updatedVendor = await vendorModel.findByIdAndUpdate(
+        vendorId,
+        { status: "verified", isVerified: true },
+        { new: true }
+      );
+    });
+    
+    if (!updatedVendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+    
+    return res.status(200).json({
+      status_code: 200,
+      message: "Vendor verified successfully",
+      data: updatedVendor
+    });
+  } catch (error) {
+    console.error("Error verifying vendor:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Add reject vendor endpoint
+router.put("/reject_vendor/:id", async (req, res) => {
+  const vendorId = req.params.id;
+  console.log("Rejecting vendor with ID:", vendorId);
+  
+  try {
+    let updatedVendor = null;
+    await connectInventoryDB(async () => {
+      updatedVendor = await vendorModel.findByIdAndUpdate(
+        vendorId,
+        { status: "rejected", isVerified: false },
+        { new: true }
+      );
+    });
+    
+    if (!updatedVendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+    
+    return res.status(200).json({
+      status_code: 200,
+      message: "Vendor rejected successfully",
+      data: updatedVendor
+    });
+  } catch (error) {
+    console.error("Error rejecting vendor:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
 // Endpoint to get vendors by status
 router.get("/vendors/:status", async (req, res) => {
