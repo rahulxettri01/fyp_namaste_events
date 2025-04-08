@@ -14,6 +14,7 @@ const {
 } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { sendMail } = require("../middleware/sendMail");
 
 const jwtExpiryMinute = 60;
 
@@ -31,11 +32,11 @@ router.post("/sign_up", async (req, res) => {
     phone: req.body.phone,
     password: req.body.password,
     role: req.body.role,
-    category: req.body.vendorType ? req.body.vendorType : null,
+    // category: req.body.vendorType ? req.body.vendorType : "user",
   };
 
   userData.push(udata);
-  console.log("Endpoint dhit");
+  console.log("Endpoint dhit", udata);
   let duplicateEmail = null;
   if (udata.role == "Admin") {
     await connectInventoryDB(async () => {
@@ -126,15 +127,36 @@ router.post("/sign_up", async (req, res) => {
           password: passwordEncrypted,
           role: udata.role,
         });
-        connectUserDB(async () => {
-          await newUser.save().then(() => {
-            res.status(200).send({
-              status_code: 200,
-              message: "User registered successfully",
-              userDetails: udata,
-            });
+
+        try {
+          // Save user first
+          await connectUserDB(async () => {
+            await newUser.save();
           });
-        });
+
+          // Then send email
+          try {
+            await sendMail(
+              newUser.email,
+              "Welcome to Namaste Events",
+              `Dear ${newUser.userName}, your account was created successfully!`
+            );
+          } catch (emailError) {
+            console.error("Email failed but user created:", emailError);
+            // Continue even if email fails
+          }
+
+          res.status(200).send({
+            status_code: 200,
+            message: "User registered successfully",
+            userDetails: udata,
+          });
+        } catch (err) {
+          return res.status(400).json({
+            status_code: 400,
+            message: err.message,
+          });
+        }
       }
     } catch (err) {
       return res.status(400).json({ message: err.message });

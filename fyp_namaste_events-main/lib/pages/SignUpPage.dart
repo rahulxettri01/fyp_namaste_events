@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:fyp_namaste_events/pages/otp/VerifyOTPPage.dart';
 import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
@@ -47,7 +48,7 @@ class _SignUpPageState extends State<SignUpPage> {
         Api.signup(data).then((response) {
           if (response != null) {
             int statusCode = response["status_code"];
-
+            print(response);
             if (statusCode == 200) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -55,6 +56,17 @@ class _SignUpPageState extends State<SignUpPage> {
                   backgroundColor: Colors.green,
                 ),
               );
+              if (data["vendorType"] == "User") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VerifyOTPPage(
+                      userId: response['userId'],
+                      email: controllerEmail.text,
+                    ),
+                  ),
+                );
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -90,31 +102,35 @@ class _SignUpPageState extends State<SignUpPage> {
         fillColor: Colors.white.withOpacity(0.8),
         filled: true,
         prefixIcon: Icon(
-          isPassword || isConfirmPassword ? Icons.lock : 
-          title == "Email" ? Icons.email :
-          title == "Name" ? Icons.person :
-          title == "Phone Number" ? Icons.phone : 
-          Icons.text_fields,
+          isPassword || isConfirmPassword
+              ? Icons.lock
+              : title == "Email"
+                  ? Icons.email
+                  : title == "Name"
+                      ? Icons.person
+                      : title == "Phone Number"
+                          ? Icons.phone
+                          : Icons.text_fields,
           color: Colors.grey,
         ),
         suffixIcon: isPassword || isConfirmPassword
             ? IconButton(
-          icon: Icon(
-            (isPassword && isPasswordVisible) ||
-                (isConfirmPassword && isConfirmPasswordVisible)
-                ? Icons.visibility
-                : Icons.visibility_off,
-          ),
-          onPressed: () {
-            setState(() {
-              if (isPassword) {
-                isPasswordVisible = !isPasswordVisible;
-              } else {
-                isConfirmPasswordVisible = !isConfirmPasswordVisible;
-              }
-            });
-          },
-        )
+                icon: Icon(
+                  (isPassword && isPasswordVisible) ||
+                          (isConfirmPassword && isConfirmPasswordVisible)
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (isPassword) {
+                      isPasswordVisible = !isPasswordVisible;
+                    } else {
+                      isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                    }
+                  });
+                },
+              )
             : null,
       ),
     );
@@ -147,29 +163,29 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _vendorTypeDropdown() {
     return selectedRole == "Admin"
         ? DropdownButtonFormField<String>(
-      value: selectedVendorType,
-      decoration: const InputDecoration(
-        labelText: 'Select Vendor Type',
-        border: OutlineInputBorder(),
-        fillColor: Colors.white70,
-        filled: true,
-        prefixIcon: Icon(
-          Icons.business,
-          color: Colors.grey,
-        ),
-      ),
-      items: ['Venue', 'Decoration', 'Photography'].map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedVendorType = newValue;
-        });
-      },
-    )
+            value: selectedVendorType,
+            decoration: const InputDecoration(
+              labelText: 'Select Vendor Type',
+              border: OutlineInputBorder(),
+              fillColor: Colors.white70,
+              filled: true,
+              prefixIcon: Icon(
+                Icons.business,
+                color: Colors.grey,
+              ),
+            ),
+            items: ['Venue', 'Decoration', 'Photography'].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedVendorType = newValue;
+              });
+            },
+          )
         : Container();
   }
 
@@ -236,15 +252,14 @@ class _SignUpPageState extends State<SignUpPage> {
               width: double.infinity,
             ),
             Positioned.fill(
-              child: Container(color: Colors.black.withOpacity(0.3))
-            ),
+                child: Container(color: Colors.black.withOpacity(0.3))),
             Column(
               children: [
                 const SizedBox(height: 40),
                 const Text(
                   "Join us to start searching",
                   style: TextStyle(
-                    fontSize: 24, 
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -268,9 +283,12 @@ class _SignUpPageState extends State<SignUpPage> {
                           const SizedBox(height: 16),
                           _entryField("Phone Number", controllerPhone),
                           const SizedBox(height: 16),
-                          _entryField("Password", controllerPassword, isPassword: true),
+                          _entryField("Password", controllerPassword,
+                              isPassword: true),
                           const SizedBox(height: 16),
-                          _entryField("Confirm Password", controllerConfirmPassword, isConfirmPassword: true),
+                          _entryField(
+                              "Confirm Password", controllerConfirmPassword,
+                              isConfirmPassword: true),
                           const SizedBox(height: 16),
                           _roleDropdown(),
                           const SizedBox(height: 16),
@@ -289,7 +307,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                             child: const Text(
                               'Sign up',
-                              style: TextStyle(fontSize: 16, color: Colors.white),
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
                             ),
                           ),
                           const SizedBox(height: 16),

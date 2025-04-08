@@ -15,7 +15,8 @@ class Api {
         headers: {"Content-Type": "application/json; charset=UTF-8"},
         body: jsonEncode(udata),
       );
-
+      print("register resp");
+      print(response);
       if (response.statusCode == 200 || response.statusCode == 400) {
         return jsonDecode(response.body);
       } else {
@@ -209,12 +210,13 @@ class Api {
     }
   }
 
-  static Future<Map<String, dynamic>> updateInventory(String id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateInventory(
+      String id, Map<String, dynamic> data) async {
     try {
       String? token = await APIConstants.getToken();
       debugPrint("Update inventory URL: ${APIConstants.baseUrl}api/update/$id");
       debugPrint("Update data: ${jsonEncode(data)}");
-      
+
       final response = await http.put(
         Uri.parse('${APIConstants.baseUrl}api/update/$id'),
         headers: {
@@ -249,10 +251,7 @@ class Api {
       }
     } catch (e) {
       debugPrint("Update error: ${e.toString()}");
-      return {
-        'success': false,
-        'message': 'Error: ${e.toString()}'
-      };
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
 
@@ -260,7 +259,7 @@ class Api {
     try {
       String? token = await APIConstants.getToken();
       debugPrint("Delete inventory URL: ${APIConstants.baseUrl}api/delete/$id");
-      
+
       final response = await http.delete(
         Uri.parse('${APIConstants.baseUrl}api/delete/$id'),
         headers: {
@@ -294,10 +293,45 @@ class Api {
       }
     } catch (e) {
       debugPrint("Delete error: ${e.toString()}");
-      return {
-        'success': false,
-        'message': 'Error: ${e.toString()}'
-      };
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
+  static Future<Map<String, dynamic>?> verifyOTP(
+    String userId,
+    String otp,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${APIConstants.baseUrl}/api/otp/verify'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          'otp': otp,
+        }),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> resendOTP(
+    String userId,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${APIConstants.baseUrl}/api/otp/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+        }),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return null;
     }
   }
 }
