@@ -11,8 +11,10 @@ const userSchema = new mongoose.Schema({
     .required(), //  phone not working
   password: { type: String, required: true },
   role: { type: String, default: "user" },
-  status: { type: String, default: "unverifed" },
+  status: { type: String, default: "unverified" },
   // role: { type: String, default: "user", enum: ["user", "admin"] },
+  otp: { type: String },
+  otpExpiry: { type: Date },
 });
 
 const userModel = mongoose.model("userModel", userSchema);

@@ -76,6 +76,12 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
       );
 
       if (response != null && response['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account verified successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -110,7 +116,7 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
     });
 
     try {
-      await Api.resendOTP(widget.userId);
+      await Api.resendOTP(widget.email);
       _startCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

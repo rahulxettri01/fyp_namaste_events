@@ -1,36 +1,33 @@
 const express = require("express");
 const router = express.Router();
 const { OTP } = require("../models/otp");
-const { sendOTPEmail } = require("../utils/emailUtils");
+const { sendOTPEmail, sendMail } = require("../middleware/sendMail");
 const { connectUserDB } = require("../Config/DBconfig");
+const { userModel } = require("../models/user");
 
 // Generate and send OTP
 router.post("/generate", async (req, res) => {
   const { email, userName } = req.body;
+  console.log("resen oyp");
+  console.log("email", email);
 
   try {
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await connectUserDB(async () => {
-      // Generate 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
       // Create or update OTP record
-      await OTP.findOneAndUpdate(
+      await userModel.findOneAndUpdate(
         { email },
-        {
-          otp,
-          createdAt: new Date(),
-          attempts: 0,
-        },
+        { otp },
         { upsert: true, new: true }
       );
+    });
+    // Send email
+    await sendOTPEmail(email, "userName", otp);
 
-      // Send email
-      await sendOTPEmail(email, otp, userName);
-
-      res.status(200).json({
-        success: true,
-        message: "OTP sent successfully",
-      });
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
     });
   } catch (error) {
     res.status(500).json({

@@ -14,7 +14,7 @@ const {
 } = require("../Config/DBconfig");
 const encrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { sendMail } = require("../middleware/sendMail");
+const { sendMail, sendOTPEmail } = require("../middleware/sendMail");
 
 const jwtExpiryMinute = 60;
 
@@ -120,12 +120,19 @@ router.post("/sign_up", async (req, res) => {
           });
         });
       } else {
+        // Add this helper function
+        const generateOTP = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
         let newUser = new userModel({
           userName: udata.userName,
           email: udata.email,
           phone: udata.phone,
           password: passwordEncrypted,
           role: udata.role,
+          status: "unverified", // Add this field
+          otp: generateOTP(), // Generate and store OTP
+          otpExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes expiry
         });
 
         try {
@@ -134,22 +141,20 @@ router.post("/sign_up", async (req, res) => {
             await newUser.save();
           });
 
-          // Then send email
+          // Send OTP email
           try {
-            await sendMail(
-              newUser.email,
-              "Welcome to Namaste Events",
-              `Dear ${newUser.userName}, your account was created successfully!`
-            );
+            await sendOTPEmail(newUser.email, newUser.userName, newUser.otp);
           } catch (emailError) {
-            console.error("Email failed but user created:", emailError);
+            console.error("OTP email failed:", emailError);
             // Continue even if email fails
           }
 
+          // In your sign_up route response:
           res.status(200).send({
             status_code: 200,
-            message: "User registered successfully",
+            message: "User registered successfully. OTP sent for verification.",
             userDetails: udata,
+            userId: newUser._id.toString(), // Ensure this is included
           });
         } catch (err) {
           return res.status(400).json({
@@ -158,6 +163,36 @@ router.post("/sign_up", async (req, res) => {
           });
         }
       }
+
+      // try {
+      //   // Save user first
+      //   await connectUserDB(async () => {
+      //     await newUser.save();
+      //   });
+
+      //   // Then send email
+      //   try {
+      //     await sendMail(
+      //       newUser.email,
+      //       "Welcome to Namaste Events",
+      //       `Dear ${newUser.userName}, your account was created successfully!`
+      //     );
+      //   } catch (emailError) {
+      //     console.error("Email failed but user created:", emailError);
+      //     // Continue even if email fails
+      //   }
+
+      //   res.status(200).send({
+      //     status_code: 200,
+      //     message: "User registered successfully",
+      //     userDetails: udata,
+      //   });
+      // } catch (err) {
+      //   return res.status(400).json({
+      //     status_code: 400,
+      //     message: err.message,
+      //   });
+      // }
     } catch (err) {
       return res.status(400).json({ message: err.message });
     }
@@ -229,6 +264,9 @@ router.post("/log_in", async (req, res) => {
           status_code: 200,
           message: "User logged in successfully",
           role: existEmail.role,
+          status: existEmail.status,
+          userId: existEmail._id.toString(), // Ensure this is included
+          email: existEmail.email,
           token: token,
         });
       } else if (existEmail.role == "Admin") {
@@ -256,4 +294,48 @@ router.post("/log_in", async (req, res) => {
   }
 });
 
+// Add this after your existing routes
+router.post("/verify-otp", async (req, res) => {
+  const { userId, otp } = req.body;
+
+  try {
+    // Find and update user in a single operation
+    let updatedUser;
+    await connectUserDB(async () => {
+      updatedUser = await userModel.findOne({
+        _id: userId,
+        otp,
+      });
+    });
+    console.log("updatedUser", updatedUser);
+
+    if (!updatedUser) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "Invalid or expired OTP",
+      });
+    }
+    // Update user status to "verified"
+    updatedUser.status = "verified";
+    await connectUserDB(async () => {
+      await updatedUser.save();
+    });
+    // await updatedUser.save();
+    res.status(200).json({
+      status_code: 200,
+      message: "Account verified successfully",
+      user: {
+        id: updatedUser._id,
+        email: updatedUser.email,
+        status: updatedUser.status,
+      },
+    });
+  } catch (err) {
+    console.error("OTP verification error:", err);
+    res.status(500).json({
+      status_code: 500,
+      message: "Server error during verification",
+    });
+  }
+});
 module.exports = router;

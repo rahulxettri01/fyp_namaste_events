@@ -38,4 +38,35 @@ const sendMail = async (to, subject, text) => {
     }
 };
 
-module.exports = { sendMail };
+const sendOTPEmail = async (email, userName, otp) => {
+    try {
+        const mailOptions = {
+            from: `Namaste Events <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Your OTP for Verification',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>OTP Verification</h2>
+                    <p>Dear ${userName},</p>
+                    <p>Your OTP for verification is:</p>
+                    <div style="font-size: 24px; font-weight: bold; margin: 20px 0;">
+                        ${otp}
+                    </div>
+                    <p>This OTP is valid for 30 minutes.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('OTP email sent to:', email);
+        return true;
+    } catch (error) {
+        console.error('Error sending OTP email:', error);
+        throw error;
+    }
+};
+
+module.exports = { 
+    sendMail,
+    sendOTPEmail
+};

@@ -302,8 +302,9 @@ class Api {
     String otp,
   ) async {
     try {
+      // print();
       final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}/api/otp/verify'),
+        Uri.parse('${APIConstants.baseUrl}auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': userId,
@@ -311,21 +312,25 @@ class Api {
         }),
       );
 
-      return jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, ...jsonDecode(response.body)};
+      } else {
+        return {'success': false, ...jsonDecode(response.body)};
+      }
     } catch (e) {
-      return null;
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
 
   static Future<Map<String, dynamic>?> resendOTP(
-    String userId,
+    String email,
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}/api/otp/generate'),
+        Uri.parse('${APIConstants.baseUrl}api/otp/generate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'userId': userId,
+          'email': email,
         }),
       );
 

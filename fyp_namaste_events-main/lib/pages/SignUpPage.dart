@@ -24,7 +24,7 @@ class _SignUpPageState extends State<SignUpPage> {
   String? selectedVendorType;
   String? errorMessage = '';
 
-  void _signUp() {
+  void _signUp() async {
     setState(() {
       errorMessage = '';
 
@@ -48,7 +48,7 @@ class _SignUpPageState extends State<SignUpPage> {
         Api.signup(data).then((response) {
           if (response != null) {
             int statusCode = response["status_code"];
-            print(response);
+            print(response["userDetails"]["role"]);
             if (statusCode == 200) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -56,7 +56,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              if (data["vendorType"] == "User") {
+              if (response["userDetails"]["role"] == "User") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -67,10 +67,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 );
               }
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
+              // Navigator.pushReplacement(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => const LoginPage()),
+              // );
             } else {
               setState(() {
                 errorMessage = "Signup failed. Try again.";

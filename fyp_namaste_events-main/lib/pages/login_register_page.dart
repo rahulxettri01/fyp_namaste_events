@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:fyp_namaste_events/pages/AdminDahboardPage.dart';
 
+import 'otp/VerifyOTPPage.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -100,7 +102,6 @@ class _LoginPageState extends State<LoginPage> {
                 prefs.setString("FrontToken", newToken);
                 if (role == "Admin") {
                   print("adminMa");
-
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -109,7 +110,6 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 } else if (role == "Super Admin") {
                   print("superAdminMa");
-
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -118,10 +118,24 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 } else {
                   print("useMa");
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomePage()),
-                  );
+                  if (response["status"] == "unverified") {
+                    print("verifyOTP red");
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VerifyOTPPage(
+                          userId: response['userId'].toString(),
+                          email: response['email'],
+                          // token: newToken, // Pass the token to VerifyOTPPage
+                        ),
+                      ),
+                    );
+                  } else if (response["status"] == "verified") {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
+                  }
                 }
               } else {
                 setState(() {
@@ -222,81 +236,78 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children:
-          [
-            Image.asset(
-              'assets/login.JPG',
-              fit: BoxFit.cover,
-              height: double.infinity,
-              width: double.infinity,
-            ),
-            Positioned.fill(
-                child: Container(color: Colors.black.withOpacity(0.3))
-            ),
-            Column(
-              children: [
-                const SizedBox(height: 40),
-                const Text(
-                  "Welcome back",
-                  style: TextStyle(
-                    fontSize: 24, 
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+        child: Stack(children: [
+          Image.asset(
+            'assets/login.JPG',
+            fit: BoxFit.cover,
+            height: double.infinity,
+            width: double.infinity,
+          ),
+          Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.3))),
+          Column(
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                "Welcome back",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '"Turning Plans into Perfect Moments!"',
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 20),
-                          _entryField("Email", _controllerEmail),
-                          const SizedBox(height: 16),
-                          _entryField("Password", _controllerPassword, isPassword: true),
-                          const SizedBox(height: 16),
-                          _roleDropdown(),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _login,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Log in',
-                              style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '"Turning Plans into Perfect Moments!"',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 20),
+                        _entryField("Email", _controllerEmail),
+                        const SizedBox(height: 16),
+                        _entryField("Password", _controllerPassword,
+                            isPassword: true),
+                        const SizedBox(height: 16),
+                        _roleDropdown(),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          if (errorMessage != null && errorMessage!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                errorMessage!,
-                                style: const TextStyle(color: Colors.red),
-                              ),
+                          child: const Text(
+                            'Log in',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                        if (errorMessage != null && errorMessage!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              errorMessage!,
+                              style: const TextStyle(color: Colors.red),
                             ),
-                          const SizedBox(height: 16),
-                          _registerText(),
-                        ],
-                      ),
+                          ),
+                        const SizedBox(height: 16),
+                        _registerText(),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ]
-        ),
+              ),
+            ],
+          ),
+        ]),
       ),
     );
   }
