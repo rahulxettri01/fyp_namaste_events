@@ -11,6 +11,7 @@ import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:fyp_namaste_events/pages/AdminDahboardPage.dart';
 
 import 'otp/VerifyOTPPage.dart';
+import 'otp/ForgotPasswordOTPPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -165,8 +166,18 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: isPassword && !isPasswordVisible,
       decoration: InputDecoration(
         labelText: title,
-        border: const OutlineInputBorder(),
-        fillColor: Colors.white.withOpacity(0.8),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0), // Increased circular radius
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.black),
+        ),
+        fillColor: Colors.white, // Full white background
         filled: true,
         prefixIcon: Icon(
           isPassword ? Icons.lock : Icons.email,
@@ -191,11 +202,25 @@ class _LoginPageState extends State<LoginPage> {
   Widget _roleDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedRole,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Select Role',
-        border: OutlineInputBorder(),
-        fillColor: Colors.white70,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.black),
+        ),
+        fillColor: Colors.white,
         filled: true,
+        prefixIcon: const Icon(
+          Icons.person_outline,
+          color: Colors.grey,
+        ),
       ),
       items: ['User', 'Admin', 'Super Admin'].map((String value) {
         return DropdownMenuItem<String>(
@@ -212,23 +237,177 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _registerText() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        const Text("Don't have an account?"),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Don't have an account?",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignUpPage()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              ),
+              child: const Text(
+                "Join us",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        // Forgot Password button
         TextButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SignUpPage()),
-            );
+            _showForgotPasswordDialog();
           },
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          ),
           child: const Text(
-            "Join us",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            "Forgot Password?",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  // Add forgot password dialog
+  void _showForgotPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+    bool isLoading = false;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              title: const Text("Reset Password"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Enter your email address and we'll send you a OTP to reset your password.",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      fillColor: Colors.white,
+                      filled: true,
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () {
+                    Navigator.of(context).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                  ),
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    if (emailController.text.isNotEmpty) {
+                      // Show loading indicator
+                      setState(() {
+                        isLoading = true;
+                      });
+                      
+                      // Simulate a delay
+                      await Future.delayed(const Duration(seconds: 1));
+                      
+                      // Hide dialog and navigate to OTP verification page
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordOTPPage(
+                            email: emailController.text,
+                            userId: "123", // Placeholder user ID
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Show error for empty email
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please enter your email address"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.0,
+                        ),
+                      )
+                    : const Text(
+                        "Send Reset OTP",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 
@@ -284,6 +463,7 @@ class _LoginPageState extends State<LoginPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            minimumSize: const Size(double.infinity, 50),
                           ),
                           child: const Text(
                             'Log in',

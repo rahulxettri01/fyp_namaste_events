@@ -24,16 +24,25 @@ class _SignUpPageState extends State<SignUpPage> {
   String? selectedVendorType;
   String? errorMessage = '';
 
+  // Add this variable to track loading state
+  bool isSigningUp = false;
+
   void _signUp() async {
+    if (isSigningUp) return; // Prevent multiple clicks
+    
     setState(() {
+      isSigningUp = true;
       errorMessage = '';
 
       if (controllerPassword.text != controllerConfirmPassword.text) {
         errorMessage = "Passwords do not match.";
+        isSigningUp = false;
       } else if (!isTermsAccepted) {
         errorMessage = "You must accept the Terms of Service.";
+        isSigningUp = false;
       } else if (selectedRole == null || selectedRole!.isEmpty) {
         errorMessage = "Please select a role.";
+        isSigningUp = false;
       } else {
         var data = {
           "userName": controllerName.text,
@@ -46,6 +55,10 @@ class _SignUpPageState extends State<SignUpPage> {
 
         // Call the API and handle the response
         Api.signup(data).then((response) {
+          setState(() {
+            isSigningUp = false;
+          });
+          
           if (response != null) {
             int statusCode = response["status_code"];
             print(response["userDetails"]["role"]);
@@ -67,10 +80,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 );
               }
-              // Navigator.pushReplacement(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => const LoginPage()),
-              // );
             } else {
               setState(() {
                 errorMessage = "Signup failed. Try again.";
@@ -83,6 +92,7 @@ class _SignUpPageState extends State<SignUpPage> {
           }
         }).catchError((error) {
           setState(() {
+            isSigningUp = false;
             errorMessage = "Error occurred: ${error.toString()}";
           });
         });
@@ -98,8 +108,18 @@ class _SignUpPageState extends State<SignUpPage> {
           (isConfirmPassword && !isConfirmPasswordVisible),
       decoration: InputDecoration(
         labelText: title,
-        border: const OutlineInputBorder(),
-        fillColor: Colors.white.withOpacity(0.8),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0), // Increased circular radius
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.black),
+        ),
+        fillColor: Colors.white, // Full white background
         filled: true,
         prefixIcon: Icon(
           isPassword || isConfirmPassword
@@ -139,11 +159,25 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _roleDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedRole,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Select Role',
-        border: OutlineInputBorder(),
-        fillColor: Colors.white70,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: const BorderSide(color: Colors.black),
+        ),
+        fillColor: Colors.white,
         filled: true,
+        prefixIcon: const Icon(
+          Icons.person_outline,
+          color: Colors.grey,
+        ),
       ),
       items: ['User', 'Admin'].map((String value) {
         return DropdownMenuItem<String>(
@@ -164,12 +198,22 @@ class _SignUpPageState extends State<SignUpPage> {
     return selectedRole == "Admin"
         ? DropdownButtonFormField<String>(
             value: selectedVendorType,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Select Vendor Type',
-              border: OutlineInputBorder(),
-              fillColor: Colors.white70,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15.0),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15.0),
+                borderSide: const BorderSide(color: Colors.black),
+              ),
+              fillColor: Colors.white,
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.business,
                 color: Colors.grey,
               ),
@@ -193,7 +237,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return Row(
       children: [
         Transform.scale(
-          scale: 1.2,
+          scale: 1.3,
           child: Checkbox(
             value: isTermsAccepted,
             onChanged: (value) {
@@ -203,6 +247,9 @@ class _SignUpPageState extends State<SignUpPage> {
             },
             activeColor: Colors.black,
             checkColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ),
         const Flexible(
@@ -210,7 +257,8 @@ class _SignUpPageState extends State<SignUpPage> {
             "I agree with the Terms of Service & Privacy Policy",
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Colors.black,
+              fontSize: 14,
             ),
           ),
         ),
@@ -219,23 +267,172 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _loginText() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        const Text("Have an account?"),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Have an account?",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              ),
+              child: const Text(
+                "Log in",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  // Removed underline decoration
+                ),
+              ),
+            ),
+          ],
+        ),
+        // Forgot Password button
         TextButton(
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
+            _showForgotPasswordDialog();
           },
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          ),
           child: const Text(
-            "Log in",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            "Forgot Password?",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              // Removed underline decoration
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  // Updated forgot password dialog with loading indicator
+  void _showForgotPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+    bool isLoading = false;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              title: const Text("Reset Password"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Enter your email address and we'll send you a OTP to reset your password.",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      fillColor: Colors.white,
+                      filled: true,
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () {
+                    Navigator.of(context).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                  ),
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    if (emailController.text.isNotEmpty) {
+                      // Show loading indicator
+                      setState(() {
+                        isLoading = true;
+                      });
+                      
+                      // Simulate API call with a delay
+                      await Future.delayed(const Duration(seconds: 2));
+                      
+                      // Call password reset API here
+                      
+                      // Hide dialog and show success message
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("OTP sent to your email"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.0,
+                        ),
+                      )
+                    : const Text(
+                        "Send Reset OTP",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 
@@ -304,12 +501,22 @@ class _SignUpPageState extends State<SignUpPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              minimumSize: const Size(double.infinity, 50),
                             ),
-                            child: const Text(
-                              'Sign up',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
-                            ),
+                            child: isSigningUp
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.0,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sign up',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.white),
+                                  ),
                           ),
                           const SizedBox(height: 16),
                           _loginText(),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 
@@ -18,7 +19,16 @@ class VerifyOTPPage extends StatefulWidget {
 }
 
 class _VerifyOTPPageState extends State<VerifyOTPPage> {
-  final TextEditingController _otpController = TextEditingController();
+  // Using 6 separate controllers for each digit
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
+  
   bool _isLoading = false;
   bool _canResend = false;
   int _countDown = 120; // 2 minutes cooldown
@@ -33,6 +43,12 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -54,8 +70,14 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
     });
   }
 
+  String _getCompleteOTP() {
+    return _controllers.map((controller) => controller.text).join();
+  }
+
   Future<void> _verifyOTP() async {
-    if (_otpController.text.isEmpty || _otpController.text.length != 6) {
+    final otp = _getCompleteOTP();
+    
+    if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid 6-digit OTP'),
@@ -72,7 +94,7 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
     try {
       final response = await Api.verifyOTP(
         widget.userId,
-        _otpController.text,
+        otp,
       );
 
       if (response != null && response['success'] == true) {
@@ -137,50 +159,187 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verify Email'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+      body: SafeArea(
+        child: Stack(
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Verify Your Email',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            // Background image
+            Image.asset(
+              'assets/login.JPG',
+              fit: BoxFit.cover,
+              height: double.infinity,
+              width: double.infinity,
             ),
-            const SizedBox(height: 20),
-            Text(
-              'We sent a 6-digit code to ${widget.email}',
-              style: const TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
+            // Overlay
+            Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.3)),
             ),
-            const SizedBox(height: 30),
-            TextField(
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              decoration: const InputDecoration(
-                labelText: 'Enter OTP',
-                border: OutlineInputBorder(),
-              ),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, letterSpacing: 8),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _verifyOTP,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Verify'),
-            ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: _canResend ? _resendOTP : null,
-              child: Text(
-                _canResend ? 'Resend OTP' : 'Resend in $_countDown seconds',
-              ),
+            // Content
+            Column(
+              children: [
+                // Top section with welcome text
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      const Text(
+                        'Welcome back',
+                        style: TextStyle(
+                          fontSize: 24, 
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '"Turning Plans into Perfect Moments!"',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black, // Changed from blue to black
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Bottom sheet with OTP verification
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, -5),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Enter 6 Digits Code',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Enter the 6 digits code that you received on your email.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // OTP Input Boxes - 6 boxes
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              6,
+                              (index) => SizedBox(
+                                width: 45,
+                                height: 55,
+                                child: TextField(
+                                  controller: _controllers[index],
+                                  focusNode: _focusNodes[index],
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 24),
+                                  maxLength: 1,
+                                  decoration: InputDecoration(
+                                    counterText: '',
+                                    filled: true,
+                                    fillColor: Colors.grey[100],
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  onChanged: (value) {
+                                    if (value.isNotEmpty && index < 5) {
+                                      _focusNodes[index + 1].requestFocus();
+                                    }
+                                    // Removed auto-verification when all digits are entered
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Continue Button - Black color
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _verifyOTP,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black, // Changed to black
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.0,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          
+                          // Resend OTP option
+                          const SizedBox(height: 16),
+                          Center(
+                            child: TextButton(
+                              onPressed: _canResend ? _resendOTP : null,
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.black,
+                              ),
+                              child: Text(
+                                _canResend ? 'Resend OTP' : 'Resend in $_countDown seconds',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
