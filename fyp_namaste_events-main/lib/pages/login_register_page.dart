@@ -119,6 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 } else {
                   print("useMa");
+                  print(response);
                   if (response["status"] == "unverified") {
                     print("verifyOTP red");
                     Navigator.pushReplacement(
@@ -167,7 +168,8 @@ class _LoginPageState extends State<LoginPage> {
       decoration: InputDecoration(
         labelText: title,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0), // Increased circular radius
+          borderRadius:
+              BorderRadius.circular(15.0), // Increased circular radius
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15.0),
@@ -259,7 +261,8 @@ class _LoginPageState extends State<LoginPage> {
               },
               style: TextButton.styleFrom(
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               ),
               child: const Text(
                 "Join us",
@@ -298,96 +301,99 @@ class _LoginPageState extends State<LoginPage> {
   void _showForgotPasswordDialog() {
     final TextEditingController emailController = TextEditingController();
     bool isLoading = false;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              title: const Text("Reset Password"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Enter your email address and we'll send you a OTP to reset your password.",
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      fillColor: Colors.white,
-                      filled: true,
-                      prefixIcon: const Icon(Icons.email),
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: const Text("Reset Password"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Enter your email address and we'll send you a OTP to reset your password.",
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    keyboardType: TextInputType.emailAddress,
+                    fillColor: Colors.white,
+                    filled: true,
+                    prefixIcon: const Icon(Icons.email),
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoading ? null : () {
-                    Navigator.of(context).pop();
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text(
-                    "Cancel",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                      },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: isLoading ? null : () async {
-                    if (emailController.text.isNotEmpty) {
-                      // Show loading indicator
-                      setState(() {
-                        isLoading = true;
-                      });
-                      
-                      // Simulate a delay
-                      await Future.delayed(const Duration(seconds: 1));
-                      
-                      // Hide dialog and navigate to OTP verification page
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ForgotPasswordOTPPage(
-                            email: emailController.text,
-                            userId: "123", // Placeholder user ID
-                          ),
-                        ),
-                      );
-                    } else {
-                      // Show error for empty email
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Please enter your email address"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        if (emailController.text.isNotEmpty) {
+                          // Show loading indicator
+                          setState(() {
+                            isLoading = true;
+                          });
+
+                          // Simulate a delay
+                          await Future.delayed(const Duration(seconds: 1));
+
+                          // Hide dialog and navigate to OTP verification page
+                          Navigator.of(context).pop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ForgotPasswordOTPPage(
+                                email: emailController.text,
+                                userId: "123", // Placeholder user ID
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Show error for empty email
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Please enter your email address"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: isLoading 
+                ),
+                child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -402,11 +408,10 @@ class _LoginPageState extends State<LoginPage> {
                           color: Colors.white,
                         ),
                       ),
-                ),
-              ],
-            );
-          }
-        );
+              ),
+            ],
+          );
+        });
       },
     );
   }

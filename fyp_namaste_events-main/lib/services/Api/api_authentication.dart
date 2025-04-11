@@ -339,4 +339,77 @@ class Api {
       return null;
     }
   }
+
+  static Future<Map<String, dynamic>?> resetPassword(
+    String userId,
+    String newPassword,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${APIConstants.baseUrl}auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, ...jsonDecode(response.body)};
+      } else {
+        return {'success': false, ...jsonDecode(response.body)};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
+  static Future<Map<String, dynamic>?> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${APIConstants.baseUrl}auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, ...jsonDecode(response.body)};
+      } else {
+        return {'success': false, ...jsonDecode(response.body)};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUserProfile() async {
+    var url = Uri.parse("${APIConstants.baseUrl}auth/users/profile");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "success": false,
+          "message": "Failed to fetch profile: ${response.statusCode}"
+        };
+      }
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Error fetching profile: ${e.toString()}"
+      };
+    }
+  }
 }

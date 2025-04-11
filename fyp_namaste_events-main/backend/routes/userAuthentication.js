@@ -294,7 +294,66 @@ router.post("/log_in", async (req, res) => {
   }
 });
 
-// Add this after your existing routes
+// Add this route after your existing routes
+router.get("/users/profile", async (req, res) => {
+  try {
+    // Get token from Authorization header
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Authorization token required",
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, "SECRET");
+
+    let user;
+    if (decoded.role === "Admin") {
+      await connectInventoryDB(async () => {
+        user = await vendorModel.findById(decoded.id);
+      });
+    } else {
+      await connectUserDB(async () => {
+        user = await userModel.findById(decoded.id);
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Return user profile data
+    res.status(200).json({
+      success: true,
+      data: {
+        userName: user.userName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error fetching profile: " + error.message,
+    });
+  }
+});
+
 router.post("/verify-otp", async (req, res) => {
   const { userId, otp } = req.body;
 

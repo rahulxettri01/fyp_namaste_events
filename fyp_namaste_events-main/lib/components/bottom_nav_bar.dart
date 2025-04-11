@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/ProfilePage.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -33,7 +34,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
             Navigator.pushNamed(context, '/orders');
             break;
           case 4:
-            Navigator.pushNamed(context, '/profile');
+            // Navigate to the profile page
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
             break;
         }
       },
@@ -45,7 +50,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
         BottomNavigationBarItem(icon: Icon(Icons.download), label: "Orders"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
-      selectedItemColor: Colors.purple,
+      backgroundColor: Colors.black,
+      selectedItemColor: Colors.white,
       unselectedItemColor: Colors.grey,
     );
   }
