@@ -17,7 +17,7 @@ class ForgotPasswordOTPPage extends StatefulWidget {
   _ForgotPasswordOTPPageState createState() => _ForgotPasswordOTPPageState();
 }
 
-class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> {
+class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with SingleTickerProviderStateMixin {
   // Using 6 separate controllers for each digit
   final List<TextEditingController> _controllers = List.generate(
     6,
@@ -38,16 +38,39 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> {
   bool _otpVerified = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  
+  // Animation controller
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _startCountdown();
+    
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    // Create slide animation from bottom to top
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutQuad,
+    ));
+    
+    // Start the animation
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _animationController.dispose();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -223,29 +246,73 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> {
                   ),
                 ),
                 
-                // Bottom sheet with OTP verification or password reset
+                // Bottom sheet with OTP verification or password reset - with slide animation
                 Expanded(
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(30),
-                          topRight: Radius.circular(30),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, -5),
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: GestureDetector(
+                        onVerticalDragUpdate: (details) {
+                          // Track drag position for animation
+                          if (details.primaryDelta! > 0) {
+                            final newValue = details.primaryDelta! / MediaQuery.of(context).size.height;
+                            _animationController.value -= newValue;
+                          }
+                        },
+                        onVerticalDragEnd: (details) {
+                          // If dragged down with significant velocity or past halfway, navigate back
+                          if (details.primaryVelocity != null && 
+                              (details.primaryVelocity! > 300 || _animationController.value < 0.5)) {
+                            _animationController.reverse().then((_) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginPage()),
+                              );
+                            });
+                          } else {
+                            // Otherwise snap back to original position
+                            _animationController.forward();
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, -5),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(24),
-                      child: SingleChildScrollView(
-                        child: _otpVerified ? _buildPasswordResetForm() : _buildOTPVerificationForm(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Drag handle at the top
+                              Container(
+                                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                                width: 60,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: SingleChildScrollView(
+                                  child: _otpVerified ? _buildPasswordResetForm() : _buildOTPVerificationForm(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

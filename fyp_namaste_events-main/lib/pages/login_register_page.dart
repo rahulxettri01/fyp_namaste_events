@@ -365,6 +365,45 @@ class _LoginPageState extends State<LoginPage> {
                           // Simulate a delay
                           await Future.delayed(const Duration(seconds: 1));
 
+                          // Simulate a successful OTP verification
+                          // Replace this with your actual OTP verification logic
+// Check if email is valid first
+                          var emailData = {
+                            "email": emailController.text,
+                          };
+
+                          try {
+                            var response =
+                                await Api.checkValidEmail(emailData.toString());
+                            if (response["status"] == "success") {
+                              // Email is valid, continue with password reset flow
+                              setState(() {
+                                isLoading = true;
+                              });
+                            } else {
+                              // Show error message from response
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(response?["message"] ??
+                                      "Invalid email address"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                          } catch (e) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    "Error checking email: ${e.toString()}"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
                           // Hide dialog and navigate to OTP verification page
                           Navigator.of(context).pop();
                           Navigator.push(

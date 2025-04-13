@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { superAdminModel } = require("../models/superadmin");
 const {
   connectSuperAdminDB,
   connectInventoryDB,
 } = require("../Config/DBconfig");
+const { superAdminModel } = require("../models/superadmin");
+const getVendorModel = require("../models/vendor");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { vendorModel } = require("../models/vendor");
@@ -20,10 +21,9 @@ router.post("/log_in", async (req, res) => {
 
   try {
     let superAdmin = null;
-
     await connectSuperAdminDB(async () => {
+      // const superAdminModel = getSuperAdminModel(connection);
       superAdmin = await superAdminModel.find();
-      // todo : find by email
     });
     console.log("admin det", superAdmin);
 
@@ -77,7 +77,7 @@ router.get("/get_all_vendors", async (req, res) => {
     await connectInventoryDB(async () => {
       data = await vendorModel.find();
     });
-    
+
     return res.status(200).send({
       status_code: 200,
       message: "All vendors retrieved successfully",
@@ -88,7 +88,7 @@ router.get("/get_all_vendors", async (req, res) => {
     return res.status(500).send({
       status_code: 500,
       message: "Error fetching vendors",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -101,7 +101,7 @@ router.get("/get_verified_vendors", async (req, res) => {
     await connectInventoryDB(async () => {
       data = await vendorModel.find({ status: "verified" });
     });
-    
+
     return res.status(200).send({
       status_code: 200,
       message: "All verified vendors retrieved successfully",
@@ -112,7 +112,7 @@ router.get("/get_verified_vendors", async (req, res) => {
     return res.status(500).send({
       status_code: 500,
       message: "Error fetching verified vendors",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -125,7 +125,7 @@ router.get("/get_rejected_vendors", async (req, res) => {
     await connectInventoryDB(async () => {
       data = await vendorModel.find({ status: "rejected" });
     });
-    
+
     return res.status(200).send({
       status_code: 200,
       message: "All rejected vendors retrieved successfully",
@@ -136,7 +136,7 @@ router.get("/get_rejected_vendors", async (req, res) => {
     return res.status(500).send({
       status_code: 500,
       message: "Error fetching rejected vendors",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -145,7 +145,7 @@ router.get("/get_rejected_vendors", async (req, res) => {
 router.put("/verify_vendor/:id", async (req, res) => {
   const vendorId = req.params.id;
   console.log("Verifying vendor with ID:", vendorId);
-  
+
   try {
     let updatedVendor = null;
     await connectInventoryDB(async () => {
@@ -155,19 +155,21 @@ router.put("/verify_vendor/:id", async (req, res) => {
         { new: true }
       );
     });
-    
+
     if (!updatedVendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
-    
+
     return res.status(200).json({
       status_code: 200,
       message: "Vendor verified successfully",
-      data: updatedVendor
+      data: updatedVendor,
     });
   } catch (error) {
     console.error("Error verifying vendor:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 });
 
@@ -175,7 +177,7 @@ router.put("/verify_vendor/:id", async (req, res) => {
 router.put("/reject_vendor/:id", async (req, res) => {
   const vendorId = req.params.id;
   console.log("Rejecting vendor with ID:", vendorId);
-  
+
   try {
     let updatedVendor = null;
     await connectInventoryDB(async () => {
@@ -185,19 +187,21 @@ router.put("/reject_vendor/:id", async (req, res) => {
         { new: true }
       );
     });
-    
+
     if (!updatedVendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
-    
+
     return res.status(200).json({
       status_code: 200,
       message: "Vendor rejected successfully",
-      data: updatedVendor
+      data: updatedVendor,
     });
   } catch (error) {
     console.error("Error rejecting vendor:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 });
 

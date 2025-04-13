@@ -171,7 +171,7 @@ router.put("/update/:id", VerifyJWT, async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     let updatedInventory;
-    
+
     console.log("Updating inventory with ID:", id);
     console.log("Update data:", updateData);
     console.log("User category:", req.user.category);
@@ -181,7 +181,7 @@ router.put("/update/:id", VerifyJWT, async (req, res) => {
     if (updateData.owner && updateData.owner !== req.user.email) {
       return res.status(403).json({
         success: false,
-        message: "You don't have permission to update this inventory"
+        message: "You don't have permission to update this inventory",
       });
     }
 
@@ -190,36 +190,34 @@ router.put("/update/:id", VerifyJWT, async (req, res) => {
         // Find the venue by ID and owner for security
         const venue = await venueModel.findOne({
           _id: id,
-          owner: req.user.email
+          owner: req.user.email,
         });
-        
+
         if (!venue) {
           return res.status(404).json({
             success: false,
-            message: "Venue not found or you don't have permission"
+            message: "Venue not found or you don't have permission",
           });
         }
-        
+
         // Update the venue with new data
-        updatedInventory = await venueModel.findByIdAndUpdate(
-          id,
-          updateData,
-          { new: true }
-        );
+        updatedInventory = await venueModel.findByIdAndUpdate(id, updateData, {
+          new: true,
+        });
       } else if (req.user.category === "Decoration") {
         // Find the decorator by ID and owner for security
         const decorator = await decoratorModel.findOne({
           _id: id,
-          owner: req.user.email
+          owner: req.user.email,
         });
-        
+
         if (!decorator) {
           return res.status(404).json({
             success: false,
-            message: "Decorator not found or you don't have permission"
+            message: "Decorator not found or you don't have permission",
           });
         }
-        
+
         // Update the decorator with new data
         updatedInventory = await decoratorModel.findByIdAndUpdate(
           id,
@@ -230,16 +228,16 @@ router.put("/update/:id", VerifyJWT, async (req, res) => {
         // Find the photographer by ID and owner for security
         const photographer = await photographyModel.findOne({
           _id: id,
-          owner: req.user.email
+          owner: req.user.email,
         });
-        
+
         if (!photographer) {
           return res.status(404).json({
             success: false,
-            message: "Photographer not found or you don't have permission"
+            message: "Photographer not found or you don't have permission",
           });
         }
-        
+
         // Update the photographer with new data
         updatedInventory = await photographyModel.findByIdAndUpdate(
           id,
@@ -252,22 +250,22 @@ router.put("/update/:id", VerifyJWT, async (req, res) => {
     if (!updatedInventory) {
       return res.status(404).json({
         success: false,
-        message: "Inventory not found or update failed"
+        message: "Inventory not found or update failed",
       });
     }
 
     console.log("Updated inventory:", updatedInventory);
-    
+
     return res.status(200).json({
       success: true,
       data: updatedInventory,
-      message: "Inventory updated successfully"
+      message: "Inventory updated successfully",
     });
   } catch (error) {
     console.error("Error updating inventory:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error while updating inventory: " + error.message
+      message: "Server error while updating inventory: " + error.message,
     });
   }
 });
@@ -293,7 +291,7 @@ router.delete("/delete/:id", VerifyJWT, async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid user category"
+        message: "Invalid user category",
       });
     }
 
@@ -301,16 +299,17 @@ router.delete("/delete/:id", VerifyJWT, async (req, res) => {
       // Find the inventory by ID and owner for security
       const inventory = await modelToUse.findOne({
         _id: id,
-        owner: req.user.email
+        owner: req.user.email,
       });
-      
+
       if (!inventory) {
         return res.status(404).json({
           success: false,
-          message: "Inventory not found or you don't have permission to delete it"
+          message:
+            "Inventory not found or you don't have permission to delete it",
         });
       }
-      
+
       // Delete the inventory
       deletedInventory = await modelToUse.findByIdAndDelete(id);
     });
@@ -318,21 +317,21 @@ router.delete("/delete/:id", VerifyJWT, async (req, res) => {
     if (!deletedInventory) {
       return res.status(404).json({
         success: false,
-        message: "Inventory not found or delete failed"
+        message: "Inventory not found or delete failed",
       });
     }
 
     console.log("Deleted inventory:", deletedInventory);
-    
+
     return res.status(200).json({
       success: true,
-      message: "Inventory deleted successfully"
+      message: "Inventory deleted successfully",
     });
   } catch (error) {
     console.error("Error deleting inventory:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error while deleting inventory: " + error.message
+      message: "Server error while deleting inventory: " + error.message,
     });
   }
 });

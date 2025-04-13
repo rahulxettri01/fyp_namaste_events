@@ -412,4 +412,68 @@ class Api {
       };
     }
   }
+
+  static Future<Map<String, dynamic>> updateUserProfile({
+    required String userName,
+    required String phone,
+  }) async {
+    var url = Uri.parse("${APIConstants.baseUrl}auth/users/update_profile");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "userName": userName,
+          "phone": phone,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "success": false,
+          "message": "Failed to update profile: ${response.statusCode}"
+        };
+      }
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Error updating profile: ${e.toString()}"
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> checkValidEmail(String email) async {
+    var url = Uri.parse("${APIConstants.baseUrl}auth/isValidMail");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "success": false,
+          "message": "Failed to check email: ${response.statusCode}"
+        };
+      }
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Error checking email: ${e.toString()}"
+      };
+    }
+  }
 }

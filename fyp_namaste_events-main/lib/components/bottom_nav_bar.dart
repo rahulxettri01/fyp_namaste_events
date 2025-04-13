@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/ProfilePage.dart';
+import 'package:fyp_namaste_events/pages/VendorsPage.dart';
+import 'package:fyp_namaste_events/pages/home_page.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -22,16 +24,22 @@ class _BottomNavBarState extends State<BottomNavBar> {
         // Navigate to the corresponding page based on the index
         switch (index) {
           case 0:
-            Navigator.pushNamed(context, '/home');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
             break;
           case 1:
-            Navigator.pushNamed(context, '/vendors');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const VendorsPage()),
+            );
             break;
           case 2:
-            Navigator.pushNamed(context, '/create');
+            Navigator.pushNamed(context, '/orders');
             break;
           case 3:
-            Navigator.pushNamed(context, '/orders');
+            Navigator.pushNamed(context, '/notifications');
             break;
           case 4:
             // Navigate to the profile page
@@ -46,8 +54,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
         BottomNavigationBarItem(icon: Icon(Icons.store), label: "Vendors"),
-        BottomNavigationBarItem(icon: Icon(Icons.add), label: "Create"),
-        BottomNavigationBarItem(icon: Icon(Icons.download), label: "Orders"),
+        BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Bookings"),
+        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notifications"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
       backgroundColor: Colors.black,

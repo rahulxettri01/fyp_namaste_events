@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SplashScreen(), // Set SignUpPage as the first screen
+      home: HomePage(), // Set SignUpPage as the first screen
     );
   }
 }

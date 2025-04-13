@@ -354,6 +354,69 @@ router.get("/users/profile", async (req, res) => {
   }
 });
 
+router.put("/users/update_profile", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Authorization token required",
+      });
+    }
+
+    const decoded = jwt.verify(token, "SECRET");
+    const { userName, phone } = req.body;
+
+    let updatedUser;
+    if (decoded.role === "Admin") {
+      await connectInventoryDB(async () => {
+        updatedUser = await vendorModel.findByIdAndUpdate(
+          decoded.id,
+          { vendorName: userName, phone },
+          { new: true }
+        );
+      });
+    } else {
+      await connectUserDB(async () => {
+        updatedUser = await userModel.findByIdAndUpdate(
+          decoded.id,
+          { userName, phone },
+          { new: true }
+        );
+      });
+    }
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: {
+        userName: updatedUser.userName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+      },
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error updating profile: " + error.message,
+    });
+  }
+});
+
 router.post("/verify-otp", async (req, res) => {
   const { userId, otp } = req.body;
 
@@ -394,6 +457,40 @@ router.post("/verify-otp", async (req, res) => {
     res.status(500).json({
       status_code: 500,
       message: "Server error during verification",
+    });
+  }
+});
+
+router.post("/isValidMail", async (req, res) => {
+  const { email } = req.body;
+  console.log("email", email);
+
+  try {
+    const existEmail = await connectUserDB(async () => {
+      console.log("eem", await userModel.findOne({ email: email }));
+
+      return await userModel.findOne({ email: email });
+    });
+
+    console.log("existEmail", existEmail);
+    if (existEmail) {
+      return res.status(200).json({
+        status_code: 200,
+        status: "success",
+        message: "User exists in the system",
+      });
+    } else {
+      return res.status(200).json({
+        status_code: 200,
+        status: "failed",
+        message: "User doesn't exist. Please sign up",
+      });
+    }
+  } catch (err) {
+    console.error("Error checking email:", err);
+    return res.status(500).json({
+      status_code: 500,
+      message: "Error checking email",
     });
   }
 });

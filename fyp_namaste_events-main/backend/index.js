@@ -31,7 +31,7 @@ const vendorRoutes = require("./routes/vendor");
 const imageRoutes = require("./routes/images");
 const superAdminRoutes = require("./routes/admin");
 const inventoryRoutes = require("./routes/inventory"); // New route added
-const otpRoutes = require('./routes/otpRoutes');
+const otpRoutes = require("./routes/otpRoutes");
 
 app.use("/api", inventoryAction);
 app.use("/auth", userAuth);

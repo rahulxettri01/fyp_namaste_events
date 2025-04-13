@@ -18,7 +18,7 @@ class VerifyOTPPage extends StatefulWidget {
   _VerifyOTPPageState createState() => _VerifyOTPPageState();
 }
 
-class _VerifyOTPPageState extends State<VerifyOTPPage> {
+class _VerifyOTPPageState extends State<VerifyOTPPage> with SingleTickerProviderStateMixin {
   // Using 6 separate controllers for each digit
   final List<TextEditingController> _controllers = List.generate(
     6,
@@ -33,16 +33,39 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
   bool _canResend = false;
   int _countDown = 120; // 2 minutes cooldown
   Timer? _timer;
+  
+  // Animation controller
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _startCountdown();
+    
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    // Create slide animation from bottom to top (instead of top to bottom)
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutQuad,
+    ));
+    
+    // Start the animation
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _animationController.dispose();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -195,7 +218,7 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
                         '"Turning Plans into Perfect Moments!"',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.black, // Changed from blue to black
+                          color: Colors.black,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -203,117 +226,156 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
                   ),
                 ),
                 
-                // Bottom sheet with OTP verification
+                // Bottom sheet with OTP verification - with slide animation
                 Expanded(
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(30),
-                          topRight: Radius.circular(30),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, -5),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Enter 6 Digits Code',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: GestureDetector(
+                        onVerticalDragUpdate: (details) {
+                          // Track drag position for animation - now for downward movement
+                          if (details.primaryDelta! > 0) {
+                            final newValue = details.primaryDelta! / MediaQuery.of(context).size.height;
+                            _animationController.value -= newValue;
+                          }
+                        },
+                        onVerticalDragEnd: (details) {
+                          // If dragged down with significant velocity or past halfway, navigate back
+                          if (details.primaryVelocity != null && 
+                              (details.primaryVelocity! > 300 || _animationController.value < 0.5)) {
+                            _animationController.reverse().then((_) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginPage()),
+                              );
+                            });
+                          } else {
+                            // Otherwise snap back to original position
+                            _animationController.forward();
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, -5),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Enter the 6 digits code that you received on your email.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          
-                          // OTP Input Boxes - 6 boxes
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(
-                              6,
-                              (index) => SizedBox(
-                                width: 45,
-                                height: 55,
-                                child: TextField(
-                                  controller: _controllers[index],
-                                  focusNode: _focusNodes[index],
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 24),
-                                  maxLength: 1,
-                                  decoration: InputDecoration(
-                                    counterText: '',
-                                    filled: true,
-                                    fillColor: Colors.grey[100],
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  onChanged: (value) {
-                                    if (value.isNotEmpty && index < 5) {
-                                      _focusNodes[index + 1].requestFocus();
-                                    }
-                                    // Removed auto-verification when all digits are entered
-                                  },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Drag handle at the top - made more prominent
+                              Container(
+                                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                                width: 60,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  borderRadius: BorderRadius.circular(5),
                                 ),
                               ),
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Continue Button - Black color
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _verifyOTP,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black, // Changed to black
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.0,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Continue',
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Enter 6 Digits Code',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                    const SizedBox(height: 12),
+                            const Text(
+                              'Enter the 6 digits code that you received on your email.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // OTP Input Boxes - 6 boxes
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: List.generate(
+                                6,
+                                (index) => SizedBox(
+                                  width: 45,
+                                  height: 55,
+                                  child: TextField(
+                                    controller: _controllers[index],
+                                    focusNode: _focusNodes[index],
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 24),
+                                    maxLength: 1,
+                                    decoration: InputDecoration(
+                                      counterText: '',
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (value) {
+                                      if (value.isNotEmpty && index < 5) {
+                                        _focusNodes[index + 1].requestFocus();
+                                      }
+                                      // Removed auto-verification when all digits are entered
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 32),
+                            
+                            // Continue Button - Black color
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _verifyOTP,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black, // Changed to black
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.0,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Continue',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                             ),
                           ),
                           
@@ -337,8 +399,12 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> {
                         ],
                       ),
                     ),
-                  ),
+                  ]),
                 ),
+                )
+                    )
+                  )
+                )
               ],
             ),
           ],

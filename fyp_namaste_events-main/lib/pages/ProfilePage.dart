@@ -20,7 +20,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _phoneController = TextEditingController();
   bool _isEditing = false;
   bool _isLoading = true;
-  String _errorMessage = ''; // Add error message state
+  String _errorMessage = '';
+  String? _userRole;
 
   @override
   void initState() {
@@ -31,30 +32,25 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _fetchUserProfile() async {
     try {
       final userData = await Api.getUserProfile();
-      print("User Data: $userData");
       if (userData['success'] != false) {
         setState(() {
-          _nameController.text = userData["data"]['userName'] ?? 'John Doe';
-          _emailController.text = userData["data"]['email'] ?? 'john.doe@example.com';
-          _phoneController.text = userData["data"]['phone'] ?? '+977 9812345678';
+          _nameController.text = userData["data"]['userName'] ?? '';
+          _emailController.text = userData["data"]['email'] ?? '';
+          _phoneController.text = userData["data"]['phone'] ?? '';
+          _userRole = userData["data"]['role'] ?? 'User';
           _isLoading = false;
         });
       } else {
         setState(() {
           _isLoading = false;
+          _errorMessage = userData['message'] ?? 'Failed to load profile';
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(userData['message'] ?? 'Failed to load profile')),
-        );
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _errorMessage = 'Error: ${e.toString()}';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
     }
   }
 
@@ -67,18 +63,12 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}users/update_profile'),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "userName": _nameController.text,
-          "phone": _phoneController.text,
-        }),
+      final response = await Api.updateUserProfile(
+        userName: _nameController.text,
+        phone: _phoneController.text,
       );
 
-      if (response.statusCode == 200) {
+      if (response['success'] == true) {
         if (mounted) {
           setState(() {
             _isEditing = false;
@@ -92,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage = 'Failed to update profile: ${response.statusCode}';
+            _errorMessage = response['message'] ?? 'Failed to update profile';
           });
         }
       }
@@ -106,6 +96,57 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _logout() async {
+    try {
+      // Clear any stored tokens or user data
+      // await APIConstants.clearToken();
+      
+      // Navigate to login page
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Logout failed: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('App Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to settings page
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.help),
+              title: const Text('Help & Support'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to help page
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: _logout,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -115,15 +156,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
-            // Update the edit button action
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
             onPressed: () async {
               if (_isEditing) {
-                await _updateProfile(); // Call update when saving
+                await _updateProfile();
               } else {
                 setState(() {
                   _isEditing = true;
@@ -131,203 +169,239 @@ class _ProfilePageState extends State<ProfilePage> {
               }
             },
           ),
-          // Add error message display in build method
-          if (_errorMessage.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _errorMessage,
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            // Profile picture
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.grey[300],
-                  child: const Icon(
-                    Icons.person,
-                    size: 80,
-                    color: Colors.grey,
-                  ),
-                ),
-                if (_isEditing)
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20,
+      body: Column(
+        children: [
+          // Main scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red),
                       ),
-                      onPressed: () {
-                        // Placeholder for image picker
-                      },
+                    ),
+                  
+                  // Profile information section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile photo section
+                        Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey.shade200,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      spreadRadius: 1,
+                                      blurRadius: 3,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  children: [
+                                    // Profile image or centered icon
+                                    Center(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(60),
+                                        child: Image.network(
+                                          'https://via.placeholder.com/120',
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 120,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.grey.shade200,
+                                              ),
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 60,
+                                                  color: Colors.grey.shade500,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    // Edit button overlay
+                                    if (_isEditing)
+                                      Positioned.fill(
+                                        child: Material(
+                                          color: Colors.black.withOpacity(0.3),
+                                          borderRadius: BorderRadius.circular(60),
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(60),
+                                            onTap: () {
+                                              // Add image picker functionality here
+                                            },
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.camera_alt,
+                                                color: Colors.white,
+                                                size: 40,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                        const Text(
+                          'Personal Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          label: 'Name',
+                          icon: Icons.person,
+                          controller: _nameController,
+                          enabled: _isEditing,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          label: 'Email',
+                          icon: Icons.email,
+                          controller: _emailController,
+                          enabled: false,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          label: 'Phone',
+                          icon: Icons.phone,
+                          controller: _phoneController,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          label: 'Role',
+                          icon: Icons.badge,
+                          controller: TextEditingController(text: _userRole),
+                          enabled: false,
+                        ),
+                      ],
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+          // Settings section at the bottom with black background
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
               ],
             ),
-            const SizedBox(height: 30),
-
-            // User information form
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Account Settings',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Personal Information',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Name field
-                  _buildTextField(
-                    label: 'Full Name',
-                    icon: Icons.person,
-                    controller: _nameController,
-                    enabled: _isEditing,
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Email field
-                  _buildTextField(
-                    label: 'Email Address',
-                    icon: Icons.email,
-                    controller: _emailController,
-                    enabled: false,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Phone field
-                  _buildTextField(
-                    label: 'Phone Number',
-                    icon: Icons.phone,
-                    controller: _phoneController,
-                    enabled: _isEditing,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Role field (non-editable)
-                  TextField(
-                    enabled: false,
-                    controller: TextEditingController(text: 'User'),
-                    decoration: InputDecoration(
-                      labelText: 'Role',
-                      prefixIcon: const Icon(Icons.work, color: Colors.black54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                _buildSettingsItem(
+                  icon: Icons.lock,
+                  title: 'Change Password',
+                  onTap: () {
+                    // Placeholder for navigation
+                  },
+                  textColor: Colors.white,
+                  iconColor: Colors.white70,
+                ),
+                Divider(color: Colors.grey.shade800),
+                _buildSettingsItem(
+                  icon: Icons.notifications,
+                  title: 'Notification Settings',
+                  onTap: () {
+                    // Placeholder for navigation
+                  },
+                  textColor: Colors.white,
+                  iconColor: Colors.white70,
+                ),
+                Divider(color: Colors.grey.shade800),
+                _buildSettingsItem(
+                  icon: Icons.logout,
+                  title: 'Logout',
+                  onTap: () {
+                    // Navigate to login page
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
+                      (route) => false, // This removes all previous routes
+                    );
+                  },
+                  textColor: Colors.redAccent,
+                  iconColor: Colors.redAccent,
+                ),
+              ],
             ),
-
-            const SizedBox(height: 30),
-
-            // Settings section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Account Settings',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSettingsItem(
-                    icon: Icons.lock,
-                    title: 'Change Password',
-                    onTap: () {
-                      // Placeholder for navigation
-                    },
-                  ),
-                  const Divider(),
-                  _buildSettingsItem(
-                    icon: Icons.notifications,
-                    title: 'Notification Settings',
-                    onTap: () {
-                      // Placeholder for navigation
-                    },
-                  ),
-                  const Divider(),
-                  _buildSettingsItem(
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    onTap: () {
-                      // Navigate to login page
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()),
-                        (route) => false, // This removes all previous routes
-                      );
-                    },
-                    textColor: Colors.red,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
+  // Add this method to fix the error
   Widget _buildTextField({
     required String label,
     required IconData icon,
@@ -364,11 +438,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Update the _buildSettingsItem method to include iconColor parameter
   Widget _buildSettingsItem({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
     Color? textColor,
+    Color? iconColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -376,7 +452,7 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: textColor ?? Colors.black54, size: 22),
+            Icon(icon, color: iconColor ?? Colors.black54, size: 22),
             const SizedBox(width: 15),
             Text(
               title,
@@ -386,7 +462,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            Icon(Icons.arrow_forward_ios, size: 16, color: textColor?.withOpacity(0.7) ?? Colors.grey),
           ],
         ),
       ),
