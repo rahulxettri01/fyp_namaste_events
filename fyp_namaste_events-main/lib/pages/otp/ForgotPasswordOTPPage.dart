@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 
+import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
+
 class ForgotPasswordOTPPage extends StatefulWidget {
   final String userId;
   final String email;
@@ -17,7 +19,8 @@ class ForgotPasswordOTPPage extends StatefulWidget {
   _ForgotPasswordOTPPageState createState() => _ForgotPasswordOTPPageState();
 }
 
-class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with SingleTickerProviderStateMixin {
+class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
+    with SingleTickerProviderStateMixin {
   // Using 6 separate controllers for each digit
   final List<TextEditingController> _controllers = List.generate(
     6,
@@ -27,10 +30,11 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
     6,
     (index) => FocusNode(),
   );
-  
+
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _isLoading = false;
   bool _canResend = false;
   int _countDown = 120; // 2 minutes cooldown
@@ -38,7 +42,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
   bool _otpVerified = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  
+
   // Animation controller
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -47,13 +51,13 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
   void initState() {
     super.initState();
     _startCountdown();
-    
+
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    
+
     // Create slide animation from bottom to top
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1.0),
@@ -62,7 +66,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
       parent: _animationController,
       curve: Curves.easeOutQuad,
     ));
-    
+
     // Start the animation
     _animationController.forward();
   }
@@ -106,7 +110,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
 
   Future<void> _verifyOTP() async {
     final otp = _getCompleteOTP();
-    
+
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -121,25 +125,62 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
       _isLoading = true;
     });
 
-    // Simulate API call with delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // For demo purposes, any 6-digit OTP is valid
-    setState(() {
-      _otpVerified = true;
-      _isLoading = false;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OTP verified successfully! Please set a new password.'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      final response = await Api.verifyOTP(
+        widget.userId,
+        otp,
+      );
+
+      if (response != null && response['success'] == true) {
+        print("opt verified for ${widget.userId}");
+        print(response);
+
+        // For demo purposes, any 6-digit OTP is valid
+        setState(() {
+          _otpVerified = true;
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('OTP verified successfully! Please set a new password.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        print("opt verified for ${widget.userId}");
+        // Navigator.pop(context);
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => _buildPasswordResetForm(),
+        //   ),
+        // );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response?['message'] ?? 'OTP verification failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('An error occurred. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _resetPassword() async {
-    if (_newPasswordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+    if (_newPasswordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all fields'),
@@ -148,7 +189,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
       );
       return;
     }
-    
+
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -158,21 +199,50 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
       );
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
+    try {
+      final response = await Api.resetPassword(
+        widget.userId,
+        _newPasswordController.text,
+      );
+
+      if (response != null && response["status_code"] == 200) {
+        setState(() {
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        throw Exception('Failed to reset password');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Simulate API call with delay
     await Future.delayed(const Duration(seconds: 2));
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Password reset successfully!'),
         backgroundColor: Colors.green,
       ),
     );
-    
+
     // Navigate back to login page
     Navigator.pushReplacement(
       context,
@@ -189,7 +259,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
 
     // Simulate API call with delay
     await Future.delayed(const Duration(seconds: 1));
-    
+
     _startCountdown();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -209,7 +279,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
             Image.asset(
               'assets/login.JPG',
               fit: BoxFit.cover,
-              height: double.infinity,
+              height: MediaQuery.of(context).size.height,
               width: double.infinity,
             ),
             // Overlay
@@ -217,114 +287,83 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
               child: Container(color: Colors.black.withOpacity(0.3)),
             ),
             // Content
-            Column(
-              children: [
-                // Top section with welcome text
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-                      const Text(
-                        'Reset Password',
-                        style: TextStyle(
-                          fontSize: 24, 
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        '"Turning Plans into Perfect Moments!"',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Bottom sheet with OTP verification or password reset - with slide animation
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: GestureDetector(
-                        onVerticalDragUpdate: (details) {
-                          // Track drag position for animation
-                          if (details.primaryDelta! > 0) {
-                            final newValue = details.primaryDelta! / MediaQuery.of(context).size.height;
-                            _animationController.value -= newValue;
-                          }
-                        },
-                        onVerticalDragEnd: (details) {
-                          // If dragged down with significant velocity or past halfway, navigate back
-                          if (details.primaryVelocity != null && 
-                              (details.primaryVelocity! > 300 || _animationController.value < 0.5)) {
-                            _animationController.reverse().then((_) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const LoginPage()),
-                              );
-                            });
-                          } else {
-                            // Otherwise snap back to original position
-                            _animationController.forward();
-                          }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(30),
-                              topRight: Radius.circular(30),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          // Top section with welcome text
+                          Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 40),
+                                const Text(
+                                  'Reset Password',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  '"Turning Plans into Perfect Moments!"',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, -5),
-                              ),
-                            ],
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Drag handle at the top
-                              Container(
-                                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                                width: 60,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade400,
-                                  borderRadius: BorderRadius.circular(5),
+                          // Form section
+                          Expanded(
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(30),
+                                  topRight: Radius.circular(30),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, -5),
+                                  ),
+                                ],
+                              ),
+                              child: SingleChildScrollView(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: _otpVerified
+                                      ? _buildPasswordResetForm()
+                                      : _buildOTPVerificationForm(),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: SingleChildScrollView(
-                                  child: _otpVerified ? _buildPasswordResetForm() : _buildOTPVerificationForm(),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildOTPVerificationForm() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -346,7 +385,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // OTP Input Boxes - 6 boxes
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -383,9 +422,9 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
             ),
           ),
         ),
-        
+
         const SizedBox(height: 32),
-        
+
         // Verify OTP Button
         SizedBox(
           width: double.infinity,
@@ -417,7 +456,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
                   ),
           ),
         ),
-        
+
         // Resend OTP option
         const SizedBox(height: 16),
         Center(
@@ -438,7 +477,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
       ],
     );
   }
-  
+
   Widget _buildPasswordResetForm() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -460,7 +499,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // New Password Field
         TextField(
           controller: _newPasswordController,
@@ -485,9 +524,8 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
               color: Colors.grey,
             ),
             suffixIcon: IconButton(
-              icon: Icon(_isPasswordVisible
-                  ? Icons.visibility
-                  : Icons.visibility_off),
+              icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off),
               onPressed: () {
                 setState(() {
                   _isPasswordVisible = !_isPasswordVisible;
@@ -496,9 +534,9 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
             ),
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Confirm Password Field
         TextField(
           controller: _confirmPasswordController,
@@ -534,9 +572,9 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage> with Sing
             ),
           ),
         ),
-        
+
         const SizedBox(height: 32),
-        
+
         // Reset Password Button
         SizedBox(
           width: double.infinity,

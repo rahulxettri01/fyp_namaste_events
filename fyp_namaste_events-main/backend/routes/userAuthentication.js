@@ -462,35 +462,114 @@ router.post("/verify-otp", async (req, res) => {
 });
 
 router.post("/isValidMail", async (req, res) => {
-  const { email } = req.body;
-  console.log("email", email);
+  const { email, role } = req.body;
+  console.log("email", email, role);
 
   try {
-    const existEmail = await connectUserDB(async () => {
-      console.log("eem", await userModel.findOne({ email: email }));
-
-      return await userModel.findOne({ email: email });
-    });
-
-    console.log("existEmail", existEmail);
-    if (existEmail) {
-      return res.status(200).json({
-        status_code: 200,
-        status: "success",
-        message: "User exists in the system",
+    let existEmail;
+    if (role == "Admin") {
+      await connectInventoryDB(async () => {
+        existEmail = await vendorModel.findOne({ email: email });
       });
     } else {
-      return res.status(200).json({
-        status_code: 200,
+      await connectUserDB(async () => {
+        existEmail = await userModel.findOne({ email: email });
+      });
+    }
+
+    if (existEmail) {
+      // Generate and send new OTP
+      const newOTP = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes expiry
+
+      // Update user with new OTP
+      if (role === "Admin") {
+        await connectInventoryDB(async () => {
+          await vendorModel.findOneAndUpdate(
+            { email },
+            { otp: newOTP, otpExpires: otpExpiry }
+          );
+        });
+      } else {
+        await connectUserDB(async () => {
+          await userModel.findOneAndUpdate(
+            { email },
+            { otp: newOTP, otpExpires: otpExpiry }
+          );
+        });
+      }
+
+      // Send OTP email
+      await sendOTPEmail(email, "User", newOTP);
+
+      res.status(200).json({
+        status: "success",
+        message: "User exists in the system",
+        email: existEmail.email,
+        userId: existEmail._id.toString(), // Convert ObjectId to string
+      });
+    } else {
+      res.status(404).json({
         status: "failed",
         message: "User doesn't exist. Please sign up",
       });
     }
   } catch (err) {
     console.error("Error checking email:", err);
-    return res.status(500).json({
+    res.status(500).json({
+      status: "error",
+      message: "Error checking email: " + err.message,
+    });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { userId, newPassword } = req.body;
+  console.log("userId", userId, newPassword);
+
+  try {
+    if (!userId || !newPassword) {
+      return res.status(400).json({
+        status_code: 400,
+        message: "User ID and new password are required",
+      });
+    }
+
+    // Find user by ID
+    let user;
+    await connectUserDB(async () => {
+      user = await userModel.findById({ _id: userId });
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status_code: 404,
+        message: "User not found",
+      });
+    }
+
+    // Hash the new password
+    const salt = await encrypt.genSalt(10);
+    const passwordEncrypted = await encrypt.hash(newPassword, salt);
+
+    // Update user's password
+    await connectUserDB(async () => {
+      console.log("save in ", user);
+
+      user.password = passwordEncrypted;
+      await user.save();
+    });
+
+    res.status(200).json({
+      status_code: 200,
+
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Password reset error:", error);
+    res.status(500).json({
       status_code: 500,
-      message: "Error checking email",
+      message: "Error resetting password: " + error.message,
     });
   }
 });

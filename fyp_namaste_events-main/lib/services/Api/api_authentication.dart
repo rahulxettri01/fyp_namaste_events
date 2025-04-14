@@ -302,7 +302,8 @@ class Api {
     String otp,
   ) async {
     try {
-      // print();
+      print("UserId on veyrify otp");
+      print(userId);
       final response = await http.post(
         Uri.parse('${APIConstants.baseUrl}auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
@@ -449,7 +450,8 @@ class Api {
     }
   }
 
-  static Future<Map<String, dynamic>> checkValidEmail(String email) async {
+  static Future<Map<String, dynamic>> checkValidEmail(
+      Map<String, String> emailData) async {
     var url = Uri.parse("${APIConstants.baseUrl}auth/isValidMail");
 
     try {
@@ -457,7 +459,8 @@ class Api {
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "email": email,
+          "email": emailData["email"],
+          "role": emailData["role"],
         }),
       );
 
@@ -473,6 +476,42 @@ class Api {
       return {
         "success": false,
         "message": "Error checking email: ${e.toString()}"
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> resetUserPassword({
+    required String userId,
+    required String password,
+  }) async {
+    var url = Uri.parse("${APIConstants.baseUrl}auth/users/reset-password");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "userId": userId,
+          "password": password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "success": false,
+          "message": "Failed to reset password: ${response.statusCode}"
+        };
+      }
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Error resetting password: ${e.toString()}"
       };
     }
   }
