@@ -5,6 +5,7 @@ import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import '../components/bottom_nav_bar.dart';
 import '../services/Api/vendorService.dart';
 import '../utils/costants/api_constants.dart';
+import 'package:fyp_namaste_events/pages/vendor_list_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -70,34 +71,48 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Namaste Events', style: textTheme.headlineSmall),
-        centerTitle: false,
+        title: Row(
+          children: [
+            const Text(
+              'Pokhara',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Search field in AppBar
+            Expanded(
+              child: Container(
+                height: 40,
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    hintStyle: TextStyle(fontSize: 14),
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    contentPadding: EdgeInsets.zero,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Implement search functionality
-            },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/namaste eventslogo.png',
+            fit: BoxFit.contain,
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'signout') {
-                signOut(context);
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return {'Sign Out': 'signout'}
-                  .entries
-                  .map((entry) => PopupMenuItem<String>(
-                        value: entry.value,
-                        child: Text(entry.key),
-                      ))
-                  .toList();
-            },
-          ),
-        ],
+        ),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -116,11 +131,22 @@ class _HomePageState extends State<HomePage> {
                             style: textTheme.headlineSmall),
                         TextButton(
                           onPressed: () {
-                            // View all venues
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorListPage(
+                                  vendors: venues,
+                                  category: 'Venue',
+                                ),
+                              ),
+                            );
                           },
-                          child: Text(
+                          child: const Text(
                             'View All',
-                            style: TextStyle(color: Colors.purple),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
@@ -242,11 +268,22 @@ class _HomePageState extends State<HomePage> {
                             style: textTheme.headlineSmall),
                         TextButton(
                           onPressed: () {
-                            // View all photographers
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorListPage(
+                                  vendors: photographers,
+                                  category: 'Photographer',
+                                ),
+                              ),
+                            );
                           },
-                          child: Text(
+                          child: const Text(
                             'View All',
-                            style: TextStyle(color: Colors.purple),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
@@ -371,11 +408,22 @@ class _HomePageState extends State<HomePage> {
                             style: textTheme.headlineSmall),
                         TextButton(
                           onPressed: () {
-                            // View all decorations
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VendorListPage(
+                                  vendors: decorations,
+                                  category: 'Decorator',
+                                ),
+                              ),
+                            );
                           },
-                          child: Text(
+                          child: const Text(
                             'View All',
-                            style: TextStyle(color: Colors.purple),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],

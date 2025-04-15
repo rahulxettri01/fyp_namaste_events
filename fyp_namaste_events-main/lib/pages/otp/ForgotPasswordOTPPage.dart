@@ -52,22 +52,19 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
     super.initState();
     _startCountdown();
 
-    // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    // Create slide animation from bottom to top
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1.0),
+      begin: const Offset(0, -2.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOutQuad,
+      curve: Curves.easeOutBack,
     ));
 
-    // Start the animation
     _animationController.forward();
   }
 
@@ -132,30 +129,23 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
       );
 
       if (response != null && response['success'] == true) {
-        print("opt verified for ${widget.userId}");
-        print(response);
-
-        // For demo purposes, any 6-digit OTP is valid
+        // Reset animation before showing new form
+        _animationController.reset();
+        
         setState(() {
           _otpVerified = true;
           _isLoading = false;
         });
 
+        // Start animation for password reset form
+        _animationController.forward();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content:
-                Text('OTP verified successfully! Please set a new password.'),
+            content: Text('OTP verified successfully! Please set a new password.'),
             backgroundColor: Colors.green,
           ),
         );
-        print("opt verified for ${widget.userId}");
-        // Navigator.pop(context);
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => _buildPasswordResetForm(),
-        //   ),
-        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -287,76 +277,98 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
               child: Container(color: Colors.black.withOpacity(0.3)),
             ),
             // Content
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          // Top section with welcome text
-                          Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 40),
-                                const Text(
-                                  'Reset Password',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  '"Turning Plans into Perfect Moments!"',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ],
+            Column(
+              children: [
+                // Fixed top section
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      const Text(
+                        'Reset Password',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '"Turning Plans into Perfect Moments!"',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Scrollable bottom section
+                Expanded(
+                  child: NotificationListener<DraggableScrollableNotification>(
+                    onNotification: (notification) {
+                      if (notification.extent <= 0.2) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      }
+                      return true;
+                    },
+                    child: DraggableScrollableSheet(
+                      initialChildSize: 0.7,
+                      minChildSize: 0.1,
+                      maxChildSize: 0.9,
+                      builder: (context, scrollController) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
                             ),
-                          ),
-                          // Form section
-                          Expanded(
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(30),
-                                  topRight: Radius.circular(30),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, -5),
-                                  ),
-                                ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, -5),
                               ),
-                              child: SingleChildScrollView(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: _otpVerified
+                            ],
+                          ),
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                children: [
+                                  // Pull down indicator
+                                  Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 5,
+                                      margin: const EdgeInsets.only(bottom: 20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                  // Form content
+                                  _otpVerified
                                       ? _buildPasswordResetForm()
                                       : _buildOTPVerificationForm(),
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ],
         ),

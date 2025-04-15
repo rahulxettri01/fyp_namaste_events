@@ -267,58 +267,34 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _loginText() {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Have an account?",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-              ),
-              child: const Text(
-                "Log in",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  // Removed underline decoration
-                ),
-              ),
-            ),
-          ],
+        const Text(
+          "Have an account?",
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
         ),
-        // Forgot Password button
         TextButton(
           onPressed: () {
-            _showForgotPasswordDialog();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
           },
           style: TextButton.styleFrom(
             foregroundColor: Colors.black,
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           ),
           child: const Text(
-            "Forgot Password?",
+            "Log in",
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              // Removed underline decoration
             ),
           ),
         ),
