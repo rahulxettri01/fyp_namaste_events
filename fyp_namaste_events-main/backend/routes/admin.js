@@ -1,8 +1,11 @@
+// Add these requires at the top
+const { userModel } = require("../models/user");
 const express = require("express");
 const router = express.Router();
 const {
   connectSuperAdminDB,
   connectInventoryDB,
+  connectUserDB,
 } = require("../Config/DBconfig");
 const { superAdminModel } = require("../models/superadmin");
 const getVendorModel = require("../models/vendor");
@@ -60,7 +63,7 @@ router.get("/get_vendors", async (req, res) => {
   await connectInventoryDB(async () => {
     data = await vendorModel.find({ status: "unverified" });
   });
-  console.log("all", data);
+  console.log("alli", data);
 
   return res.status(200).send({
     status_code: 200,
@@ -221,6 +224,79 @@ router.get("/vendors/:status", async (req, res) => {
 
 router.post("/update_vendor", async (req, res) => {
   console.log(req.body);
+});
+
+// Get all users
+router.get("/get_all_users", async (req, res) => {
+  console.log("Getting all users for admins");
+
+  try {
+    await connectUserDB(async () => {
+      const users = await userModel.find();
+      console.log("get all users bat aako", users);
+
+      return res.status(200).send({
+        status_code: 200,
+        message: "Users retrieved successfully",
+        data: users,
+      });
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching users",
+      error: error.message,
+    });
+  }
+});
+
+// Get verified users
+router.get("/get_verified_users", async (req, res) => {
+  console.log("Getting verified users");
+  let data = [];
+  try {
+    await connectUserDB(async () => {
+      data = await userModel.find({ status: "verified" });
+    });
+
+    return res.status(200).send({
+      status_code: 200,
+      message: "Verified users retrieved successfully",
+      data: data,
+    });
+  } catch (error) {
+    console.error("Error fetching verified users:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching verified users",
+      error: error.message,
+    });
+  }
+});
+
+// Get unverified users
+router.get("/get_unverified_users", async (req, res) => {
+  console.log("Getting unverified users");
+  let data = [];
+  try {
+    await connectUserDB(async () => {
+      data = await userModel.find({ status: "unverified" });
+    });
+
+    return res.status(200).send({
+      status_code: 200,
+      message: "Unverified users retrieved successfully",
+      data: data,
+    });
+  } catch (error) {
+    console.error("Error fetching unverified users:", error);
+    return res.status(500).send({
+      status_code: 500,
+      message: "Error fetching unverified users",
+      error: error.message,
+    });
+  }
 });
 
 module.exports = router;

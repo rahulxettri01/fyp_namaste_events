@@ -515,4 +515,82 @@ class Api {
       };
     }
   }
-}
+
+  // Add new methods inside the Api class
+  static Future<List<dynamic>> getAllUsers() async {
+    print("url for get all user");
+    print(Uri.parse("${APIConstants.baseUrl}superadmin/get_all_users"));
+    var url = Uri.parse("${APIConstants.baseUrl}superadmin/get_all_users");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData['data'];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Error fetching all users: ${e.toString()}");
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getVerifiedUsers() async {
+    var url = Uri.parse("${APIConstants.baseUrl}superadmin/get_verified_users");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData['data'];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Error fetching verified users: ${e.toString()}");
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getUnverifiedUsers() async {
+    var url = Uri.parse("${APIConstants.baseUrl}superadmin/get_unverified_users");
+    String? token = await APIConstants.getToken();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData['data'];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Error fetching unverified users: ${e.toString()}");
+      return [];
+    }
+  }
+} // End of Api class
