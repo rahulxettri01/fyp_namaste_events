@@ -518,8 +518,6 @@ class Api {
 
   // Add new methods inside the Api class
   static Future<List<dynamic>> getAllUsers() async {
-    print("url for get all user");
-    print(Uri.parse("${APIConstants.baseUrl}superadmin/get_all_users"));
     var url = Uri.parse("${APIConstants.baseUrl}superadmin/get_all_users");
     String? token = await APIConstants.getToken();
 
@@ -570,7 +568,8 @@ class Api {
   }
 
   static Future<List<dynamic>> getUnverifiedUsers() async {
-    var url = Uri.parse("${APIConstants.baseUrl}superadmin/get_unverified_users");
+    var url =
+        Uri.parse("${APIConstants.baseUrl}superadmin/get_unverified_users");
     String? token = await APIConstants.getToken();
 
     try {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/ProfilePage.dart';
 import 'package:fyp_namaste_events/pages/VendorsPage.dart';
+import 'package:fyp_namaste_events/pages/bookingPage.dart';
 import 'package:fyp_namaste_events/pages/home_page.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -36,7 +37,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
             );
             break;
           case 2:
-            Navigator.pushNamed(context, '/orders');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const BookingPage()),
+            );
             break;
           case 3:
             Navigator.pushNamed(context, '/notifications');
@@ -54,8 +58,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
         BottomNavigationBarItem(icon: Icon(Icons.store), label: "Vendors"),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Bookings"),
-        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notifications"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today), label: "Bookings"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.notifications), label: "Notifications"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
       backgroundColor: Colors.black,

@@ -32,7 +32,7 @@ router.post("/sign_up", async (req, res) => {
     phone: req.body.phone,
     password: req.body.password,
     role: req.body.role,
-    // category: req.body.vendorType ? req.body.vendorType : "user",
+    category: req.body.vendorType ? req.body.vendorType : "user",
   };
 
   userData.push(udata);
@@ -59,7 +59,7 @@ router.post("/sign_up", async (req, res) => {
     });
   } else {
     try {
-      console.log("asd");
+      console.log("asd", udata);
       const salt = await encrypt.genSalt(10);
       const passwordEncrypted = await encrypt.hash(udata.password, salt);
       console.log("suc", passwordEncrypted);

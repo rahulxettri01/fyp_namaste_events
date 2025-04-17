@@ -29,7 +29,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   void _signUp() async {
     if (isSigningUp) return; // Prevent multiple clicks
-    
+
     setState(() {
       isSigningUp = true;
       errorMessage = '';
@@ -51,6 +51,7 @@ class _SignUpPageState extends State<SignUpPage> {
           "password": controllerPassword.text,
           "role": selectedRole,
           "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
+          "category": selectedRole == "Admin" ? selectedVendorType : null,
         };
 
         // Call the API and handle the response
@@ -58,7 +59,7 @@ class _SignUpPageState extends State<SignUpPage> {
           setState(() {
             isSigningUp = false;
           });
-          
+
           if (response != null) {
             int statusCode = response["status_code"];
             print(response["userDetails"]["role"]);
@@ -109,7 +110,8 @@ class _SignUpPageState extends State<SignUpPage> {
       decoration: InputDecoration(
         labelText: title,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0), // Increased circular radius
+          borderRadius:
+              BorderRadius.circular(15.0), // Increased circular radius
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15.0),
@@ -306,89 +308,92 @@ class _SignUpPageState extends State<SignUpPage> {
   void _showForgotPasswordDialog() {
     final TextEditingController emailController = TextEditingController();
     bool isLoading = false;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              title: const Text("Reset Password"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Enter your email address and we'll send you a OTP to reset your password.",
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      fillColor: Colors.white,
-                      filled: true,
-                      prefixIcon: const Icon(Icons.email),
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: const Text("Reset Password"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Enter your email address and we'll send you a OTP to reset your password.",
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    keyboardType: TextInputType.emailAddress,
+                    fillColor: Colors.white,
+                    filled: true,
+                    prefixIcon: const Icon(Icons.email),
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoading ? null : () {
-                    Navigator.of(context).pop();
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text(
-                    "Cancel",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                      },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: isLoading ? null : () async {
-                    if (emailController.text.isNotEmpty) {
-                      // Show loading indicator
-                      setState(() {
-                        isLoading = true;
-                      });
-                      
-                      // Simulate API call with a delay
-                      await Future.delayed(const Duration(seconds: 2));
-                      
-                      // Call password reset API here
-                      
-                      // Hide dialog and show success message
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("OTP sent to your email"),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        if (emailController.text.isNotEmpty) {
+                          // Show loading indicator
+                          setState(() {
+                            isLoading = true;
+                          });
+
+                          // Simulate API call with a delay
+                          await Future.delayed(const Duration(seconds: 2));
+
+                          // Call password reset API here
+
+                          // Hide dialog and show success message
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("OTP sent to your email"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: isLoading 
+                ),
+                child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -403,11 +408,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           color: Colors.white,
                         ),
                       ),
-                ),
-              ],
-            );
-          }
-        );
+              ),
+            ],
+          );
+        });
       },
     );
   }
