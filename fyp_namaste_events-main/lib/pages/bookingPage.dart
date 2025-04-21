@@ -1,127 +1,82 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:fyp_namaste_events/services/Api/bookingService.dart';
+import 'package:intl/intl.dart';
 
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key});
+  final String vendorId;
+  final String vendorName;
+  final double price;
+
+  const BookingPage({
+    Key? key,
+    required this.vendorId,
+    required this.vendorName,
+    required this.price,
+  }) : super(key: key);
 
   @override
-  _BookingPageState createState() => _BookingPageState();
+  State<BookingPage> createState() => _BookingPageState();
 }
 
 class _BookingPageState extends State<BookingPage> {
+  final _formKey = GlobalKey<FormState>();
   DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  final TextEditingController _guestCountController = TextEditingController();
+  final TextEditingController _requirementsController = TextEditingController();
+  final TextEditingController _venueController = TextEditingController();
   bool isLoading = false;
-  List<String> availableSlots = [];
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        selectedTime = null;  // Reset time when date changes
       });
-      await _fetchAvailableSlots();
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    if (availableSlots.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No available slots for the selected date')),
-      );
-      return;
-    }
-
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-
-    if (picked != null && picked != selectedTime) {
-      final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-      if (availableSlots.contains(formattedTime)) {
-        setState(() {
-          selectedTime = picked;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Selected time slot is not available')),
-        );
-      }
-    }
-  }
-
-  Future<void> _fetchAvailableSlots() async {
-    if (selectedDate == null) return;
-
-    setState(() {
-      isLoading = true;
-    });
-
-    final response = await http.get(
-      Uri.parse('https://your-backend-url.com/available-slots?artistId=123&date=${selectedDate!.toIso8601String().split('T')[0]}'),
-    );
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+  void _submitBooking() async {
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        availableSlots = List<String>.from(data['availableSlots']);
+        isLoading = true;
       });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch available slots')),
-      );
-    }
-  }
 
-  Future<void> _submitBooking() async {
-    if (selectedDate == null || selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a date and time')),
-      );
-      return;
-    }
+      final bookingData = {
+        'vendorId': widget.vendorId,
+        'eventType': 'Event',
+        'eventDate': DateFormat('yyyy-MM-dd').format(selectedDate!),
+        'guestCount': int.parse(_guestCountController.text),
+        'requirements': _requirementsController.text,
+        'venue': _venueController.text,
+        'totalAmount': widget.price,
+      };
 
-    setState(() {
-      isLoading = true;
-    });
-
-    final response = await http.post(
-      Uri.parse('https://your-backend-url.com/newBooking'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'artistId': '123',
-        'customerId': '456',
-        'date': selectedDate!.toIso8601String().split('T')[0],
-        'startTime': '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}',
-      }),
-    );
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking successful')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to book appointment')),
-      );
+      try {
+        final result = await BookingService.createBooking(bookingData);
+        if (result['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking created successfully!')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result['message'] ?? 'Booking failed')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -129,65 +84,85 @@ class _BookingPageState extends State<BookingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Book Appointment'),
+        title: const Text('Book Vendor'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Select Date',
-              style: TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    selectedDate == null
-                        ? 'No date chosen!'
-                        : selectedDate!.toLocal().toString().split(' ')[0],
-                  ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Booking for ${widget.vendorName}',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                title: Text(selectedDate == null
+                    ? 'Select Event Date'
+                    : 'Event Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}'),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDate(context),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _guestCountController,
+                decoration: const InputDecoration(
+                  labelText: 'Number of Guests',
+                  border: OutlineInputBorder(),
                 ),
-                ElevatedButton(
-                  onPressed: () => _selectDate(context),
-                  child: Text('Choose Date'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter number of guests';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _venueController,
+                decoration: const InputDecoration(
+                  labelText: 'Venue',
+                  border: OutlineInputBorder(),
                 ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Select Time',
-              style: TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    selectedTime == null
-                        ? 'No time chosen!'
-                        : selectedTime!.format(context),
-                  ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter venue details';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _requirementsController,
+                decoration: const InputDecoration(
+                  labelText: 'Special Requirements',
+                  border: OutlineInputBorder(),
                 ),
-                ElevatedButton(
-                  onPressed: () => _selectTime(context),
-                  child: Text('Choose Time'),
-                ),
-              ],
-            ),
-            SizedBox(height: 40),
-            if (isLoading)
-              Center(child: CircularProgressIndicator())
-            else
-              Center(
+                maxLines: 3,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Total Amount: Rs.${widget.price}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _submitBooking,
-                  child: Text('Submit Booking'),
+                  onPressed: isLoading ? null : _submitBooking,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Confirm Booking'),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

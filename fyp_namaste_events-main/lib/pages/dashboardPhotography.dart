@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/AddInventory.dart';
+import 'package:fyp_namaste_events/pages/VendorAvailabilityPage.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:fyp_namaste_events/pages/pending_req_vendor.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -158,31 +159,42 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
 
   // Function to navigate to different pages
   void _navigateToPage(String page) async {
-    switch (page) {
-      case 'Dashboard':
-        break;
-      case 'Profile':
-        break;
-      case 'Settings':
-        break;
-      case 'Add Inventory':
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AddInventoryPage(token: widget.token),
-          ),
-        );
-
-        if (result == true) {
-          print("Inventory item added");
-          _fetchInventory();
-        }
-        break;
-      default:
-        break;
+      switch (page) {
+        case 'Dashboard':
+          break;
+        case 'Profile':
+          break;
+        case 'Settings':
+          break;
+        case 'Add Inventory':
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddInventoryPage(token: widget.token),
+            ),
+          );
+  
+          if (result == true) {
+            print("Inventory item added");
+            _fetchInventory();
+          }
+          break;
+        case 'Availability':  // Add this case
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VendorAvailabilityPage(
+                vendorId: jwtde['_id'],
+                vendorType: 'photography',
+              ),
+            ),
+          );
+          break;
+        default:
+          break;
+      }
     }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,6 +300,14 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
               title: Text('Add Inventory'),
               onTap: () {
                 _navigateToPage('Add Inventory');
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.calendar_today),
+              title: Text('Manage Availability'),
+              onTap: () {
+                _navigateToPage('Availability');
               },
             ),
             Divider(),

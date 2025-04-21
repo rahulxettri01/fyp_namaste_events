@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/AddInventory.dart';
+import 'package:fyp_namaste_events/pages/VendorAvailabilityPage.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
 import 'package:fyp_namaste_events/pages/pending_req_vendor.dart';
 import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
@@ -168,6 +169,17 @@ class _DecorationDashboardState extends State<DecorationDashboard> {
           print("Inventory item added");
           _fetchInventory();
         }
+        break;
+      case 'Availability':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VendorAvailabilityPage(
+              vendorId: jwtde['_id'],
+              vendorType: 'decoration',
+            ),
+          ),
+        );
         break;
       default:
         break;

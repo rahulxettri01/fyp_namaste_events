@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/vendor_detail_page.dart';
 
+// for admin
 class VendorListPage extends StatelessWidget {
   final List<dynamic> vendors;
   final String category;

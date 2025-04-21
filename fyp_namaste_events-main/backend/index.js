@@ -33,6 +33,13 @@ const superAdminRoutes = require("./routes/admin");
 const inventoryRoutes = require("./routes/inventory"); // New route added
 const otpRoutes = require("./routes/otpRoutes");
 
+// Add this line with your other routes
+const bookingRoutes = require("./routes/bookingRoutes");
+const VendorAvailabilityRoutes = require("./routes/vendorAvailability");
+
+app.use("/api/vendorAvailability", VendorAvailabilityRoutes);
+// Add this line where you define other app.use() statements
+app.use("/api/bookings", bookingRoutes);
 app.use("/api", inventoryAction);
 app.use("/auth", userAuth);
 app.use("/vendor", vendorAuth);

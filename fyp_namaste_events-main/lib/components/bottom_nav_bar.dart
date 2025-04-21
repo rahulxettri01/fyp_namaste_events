@@ -37,10 +37,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
             );
             break;
           case 2:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const BookingPage()),
-            );
+            // Navigator.push(
+            //   // context,
+            //   // // MaterialPageRoute(builder: (context) => const BookingPage()),
+            // );
             break;
           case 3:
             Navigator.pushNamed(context, '/notifications');

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/services/Api/bookingService.dart';
 import 'package:fyp_namaste_events/utils/costants/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -32,6 +33,8 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
   late TextEditingController priceController;
   late TextEditingController addressController;
   late TextEditingController descriptionController;
+  // Add this to your existing variables
+  List<DateTime> unavailableDates = [];
 
   @override
   void initState() {
@@ -50,6 +53,22 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
         TextEditingController(text: inventory['description'] ?? '');
 
     fetchImages();
+    fetchAvailability(); // Add this line
+  }
+
+  // Add this new method
+  Future<void> fetchAvailability() async {
+    try {
+      final availability = await BookingService.getVendorAvailability(email);
+      setState(() {
+        unavailableDates = availability
+            .where((a) => a['isAvailable'] == false)
+            .map((a) => DateTime.parse(a['date']))
+            .toList();
+      });
+    } catch (e) {
+      print("Error fetching availability: $e");
+    }
   }
 
   @override
@@ -153,17 +172,18 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
 
       // Print the inventory ID for debugging
       print("Deleting inventory with ID: ${inventory['_id']}");
-      
+
       // Use the API service to delete
       final result = await Api.deleteInventory(inventory['_id']);
-      
+
       print("Delete result: $result");
 
       if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Inventory deleted successfully')),
         );
-        Navigator.pop(context, true); // Return to previous screen with refresh flag
+        Navigator.pop(
+            context, true); // Return to previous screen with refresh flag
       } else {
         setState(() {
           isLoading = false;
@@ -431,6 +451,44 @@ class _InventoryDetailsPageState extends State<InventoryDetailsPage> {
                         maxLines: 3,
                       ),
                     ],
+                    const SizedBox(height: 20),
+                    Text("Images:",
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    if (images.isNotEmpty)
+                      Column(
+                        children: images.map((image) {
+                          return Image.network(
+                            '${image['fullUrl']}',
+                            height: 300,
+                            fit: BoxFit.contain,
+                          );
+                        }).toList(),
+                      ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Unavailable Dates:",
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    if (unavailableDates.isEmpty)
+                      Text("No unavailable dates",
+                          style: TextStyle(fontSize: 16))
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: unavailableDates.map((date) {
+                          return Chip(
+                            label: Text(
+                              "${date.day}/${date.month}/${date.year}",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: Colors.red,
+                          );
+                        }).toList(),
+                      ),
                     const SizedBox(height: 20),
                     Text("Images:",
                         style: const TextStyle(
