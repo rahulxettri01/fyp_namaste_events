@@ -12,6 +12,7 @@ import 'package:fyp_namaste_events/pages/AdminDahboardPage.dart';
 
 import 'otp/VerifyOTPPage.dart';
 import 'otp/ForgotPasswordOTPPage.dart';
+import 'package:fyp_namaste_events/utils/validator.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,166 +39,210 @@ class _LoginPageState extends State<LoginPage> {
     prefs = await SharedPreferences.getInstance();
   }
 
-  void _login() {
+  void _login() async {
     setState(() {
-      if (selectedRole == null || selectedRole!.isEmpty) {
+      errorMessage = '';
+    });
+
+    // Validate all fields
+    String? emailError = Validator.validateLoginEmail(_controllerEmail.text);
+    String? passwordError =
+        Validator.validateLoginPassword(_controllerPassword.text);
+
+    if (emailError != null) {
+      setState(() {
+        errorMessage = emailError;
+      });
+      return;
+    } else if (passwordError != null) {
+      setState(() {
+        errorMessage = passwordError;
+      });
+      return;
+    } else if (selectedRole == null || selectedRole!.isEmpty) {
+      setState(() {
         errorMessage = "Please select a role.";
-      } else if (_controllerEmail.text.isEmpty ||
-          _controllerPassword.text.isEmpty) {
-        errorMessage = "Please fill in all fields.";
+      });
+      return;
+    }
+
+    // If validation passes, proceed with login
+    var data = {
+      "email": _controllerEmail.text,
+      "password": _controllerPassword.text,
+      "role": selectedRole,
+    };
+
+    try {
+      if (selectedRole == "Super Admin") {
+        final response = await Api.loginAdmin(data);
+        if (response != null) {
+          int statusCode = response["status_code"];
+          var newToken = response["token"];
+          if (statusCode == 200) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Login successful! Welcome."),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            prefs.setString("FrontToken", newToken);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AdminDashboardPage(token: newToken)),
+            );
+          } else {
+            setState(() {
+              errorMessage = response["message"] ?? "Login failed. Try again.";
+            });
+          }
+        }
       } else {
-        var data = {
-          "email": _controllerEmail.text,
-          "password": _controllerPassword.text,
-          "role": selectedRole,
-        };
+        final response = await Api.login(data);
+        if (response != null) {
+          int statusCode = response["status_code"];
+          
+          if (statusCode == 401) {  // Unauthorized - invalid credentials
+            setState(() {
+              errorMessage = "Invalid email or password";
+            });
+            return;
+          }
 
-        if (selectedRole == "Super Admin") {
-          Api.loginAdmin(data).then((response) {
-            print("responseeee");
-            print(response);
-            if (response != null) {
-              int statusCode = response["status_code"];
-              var newToken = response["token"];
-              if (statusCode == 200) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Login successful! Welcome."),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+          if (statusCode == 200) {
+            String role = response["role"];
+            var newToken = response["token"];
 
-                prefs.setString("FrontToken", newToken);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Login successful! Welcome."),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            prefs.setString("FrontToken", newToken);
+            if (role == "Admin") {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => VerificationPage(token: newToken)),
+              );
+            } else if (role == "Super Admin") {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => AdminDashboardPage(token: newToken)),
+              );
+            } else {
+              if (response["status"] == "unverified") {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          AdminDashboardPage(token: newToken)),
-                );
-              } else {
-                setState(() {
-                  errorMessage =
-                      response["message"] ?? "Login failed. Try again.";
-                });
-              }
-            }
-          });
-        } else {
-          // Call the API and handle the response
-          Api.login(data).then((response) {
-            if (response != null) {
-              // imp: if email does not exist null is returned
-              int statusCode = response["status_code"];
-              print("roleeee");
-              String role = response["role"];
-              var newToken = response["token"];
-              print(newToken);
-              if (statusCode == 200) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Login successful! Welcome."),
-                    backgroundColor: Colors.green,
+                    builder: (context) => VerifyOTPPage(
+                      userId: response['userId'].toString(),
+                      email: response['email'],
+                    ),
                   ),
                 );
-
-                prefs.setString("FrontToken", newToken);
-                if (role == "Admin") {
-                  print("adminMa");
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            VerificationPage(token: newToken)),
-                  );
-                } else if (role == "Super Admin") {
-                  print("superAdminMa");
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            AdminDashboardPage(token: newToken)),
-                  );
-                } else {
-                  print("useMa");
-                  print(response);
-                  if (response["status"] == "unverified") {
-                    print("verifyOTP red");
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VerifyOTPPage(
-                          userId: response['userId'].toString(),
-                          email: response['email'],
-                          // token: newToken, // Pass the token to VerifyOTPPage
-                        ),
-                      ),
-                    );
-                  } else if (response["status"] == "verified") {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
-                  }
-                }
-              } else {
-                setState(() {
-                  errorMessage =
-                      response["message"] ?? "Login failed. Try again.";
-                });
+              } else if (response["status"] == "verified") {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
               }
-            } else {
-              setState(() {
-                errorMessage = "Unexpected response from server.";
-              });
             }
-          }).catchError((error) {
+          } else if (statusCode == 404) {
             setState(() {
-              errorMessage = "Error occurred: ${error.toString()}";
+              errorMessage = "User does not exist. Please sign up first.";
             });
+          } else {
+            setState(() {
+              errorMessage = response["message"] ?? "Login failed. Try again.";
+            });
+          }
+        } else {
+          setState(() {
+            errorMessage = "Invalid email or password";
           });
         }
       }
-    });
+    } catch (error) {
+      setState(() {
+        errorMessage = "Error occurred: ${error.toString()}";
+      });
+    }
   }
 
   Widget _entryField(String title, TextEditingController controller,
       {bool isPassword = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword && !isPasswordVisible,
-      decoration: InputDecoration(
-        labelText: title,
-        border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(15.0), // Increased circular radius
+    // Get field-specific error message
+    String? getFieldError() {
+      if (controller.text.isEmpty) return null;
+
+      switch (title) {
+        case "Email":
+          return Validator.validateLoginEmail(controller.text);
+        case "Password":
+          return Validator.validateLoginPassword(controller.text);
+        default:
+          return null;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: isPassword && !isPasswordVisible,
+          onChanged: (value) {
+            // Trigger rebuild to show/hide error
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            labelText: title,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+              borderSide: BorderSide(
+                color: getFieldError() != null ? Colors.red : Colors.grey,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+              borderSide: BorderSide(
+                color: getFieldError() != null ? Colors.red : Colors.black,
+              ),
+            ),
+            fillColor: Colors.white,
+            filled: true,
+            prefixIcon: Icon(
+              isPassword ? Icons.lock : Icons.email,
+              color: getFieldError() != null ? Colors.red : Colors.grey,
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: getFieldError() != null ? Colors.red : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isPasswordVisible = !isPasswordVisible;
+                      });
+                    },
+                  )
+                : null,
+            errorText: getFieldError(),
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: const BorderSide(color: Colors.black),
-        ),
-        fillColor: Colors.white, // Full white background
-        filled: true,
-        prefixIcon: Icon(
-          isPassword ? Icons.lock : Icons.email,
-          color: Colors.grey,
-        ),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(isPasswordVisible
-                    ? Icons.visibility
-                    : Icons.visibility_off),
-                onPressed: () {
-                  setState(() {
-                    isPasswordVisible = !isPasswordVisible;
-                  });
-                },
-              )
-            : null,
-      ),
+      ],
     );
   }
 

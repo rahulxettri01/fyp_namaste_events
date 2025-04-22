@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/VendorsPage.dart';
 import 'package:fyp_namaste_events/pages/vendor_detail_page.dart';
 import 'package:fyp_namaste_events/utils/theme/custom_themes/text_theme.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
@@ -21,24 +22,52 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> decorations = [];
   bool isLoading = true;
 
+  // Add featuredCategories list
+  final List<Map<String, dynamic>> featuredCategories = [
+    {
+      'title': 'Venues\nfor Events',
+      'image': 'assets/eventvenue.png',
+      'type': 'venue'
+    },
+    {
+      'title': 'Photography\nServices',
+      'image': 'assets/photography.png',
+      'type': 'photographer'
+    },
+    {
+      'title': 'Decoration\nServices',
+      'image': 'assets/decorartion.png',
+      'type': 'decorator'
+    },
+    {'title': 'Catering\nServices', 'image': 'assets/food.png', 'type': 'food'},
+  ];
+
+  // Add search and filter states
+  final TextEditingController _searchController = TextEditingController();
+  List<dynamic> filteredVenues = [];
+  List<dynamic> filteredPhotographers = [];
+  List<dynamic> filteredDecorations = [];
+  String _selectedFilter = 'All'; // For category filtering
+
   @override
   void initState() {
     super.initState();
-    vendorService = VendorService(
-        APIConstants.baseUrl); // Replace with your vendor's API base URL
+    vendorService = VendorService(APIConstants.baseUrl);
     fetchData();
   }
 
   Future<void> fetchData() async {
     try {
       final fetchedInventory = await vendorService.fetchAllInventory();
-      print("featched Data");
-      print(fetchedInventory);
       if (fetchedInventory['success']) {
         setState(() {
           venues = fetchedInventory['data']['venues'];
           photographers = fetchedInventory['data']['photographers'];
           decorations = fetchedInventory['data']['decorators'];
+          // Initialize filtered lists
+          filteredVenues = venues;
+          filteredPhotographers = photographers;
+          filteredDecorations = decorations;
           isLoading = false;
         });
       } else {
@@ -47,12 +76,77 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      // Handle error
       print('Failed to fetch data: $e');
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  // Add search method
+  void _searchVendors(String query) {
+    setState(() {
+      if (query.isEmpty && _selectedFilter == 'All') {
+        filteredVenues = venues;
+        filteredPhotographers = photographers;
+        filteredDecorations = decorations;
+      } else {
+        // Venues filtering
+        filteredVenues = venues
+            .where((venue) =>
+                venue['venueName']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()) ||
+                venue['address']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()))
+            .toList();
+
+        // Photographers filtering
+        filteredPhotographers = photographers
+            .where((photographer) =>
+                photographer['photographyName']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()) ||
+                photographer['address']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()))
+            .toList();
+
+        // Decorations filtering
+        filteredDecorations = decorations
+            .where((decoration) =>
+                decoration['decoratorName']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()) ||
+                decoration['address']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()))
+            .toList();
+
+        // Apply category filter
+        switch (_selectedFilter) {
+          case 'Venues':
+            filteredPhotographers = [];
+            filteredDecorations = [];
+            break;
+          case 'Photographers':
+            filteredVenues = [];
+            filteredDecorations = [];
+            break;
+          case 'Decorators':
+            filteredVenues = [];
+            filteredPhotographers = [];
+            break;
+        }
+      }
+    });
   }
 
   // Sign-out function
@@ -87,10 +181,21 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 height: 40,
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: _searchVendors,
                   decoration: InputDecoration(
-                    hintText: 'Search',
+                    hintText: 'Search venues, photographers...',
                     hintStyle: TextStyle(fontSize: 14),
                     prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _searchVendors('');
+                            },
+                          )
+                        : null,
                     contentPadding: EdgeInsets.zero,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -120,6 +225,200 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Add filter chips
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          FilterChip(
+                            label: const Text('All'),
+                            selected: _selectedFilter == 'All',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedFilter = 'All';
+                                _searchVendors(_searchController.text);
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: const Text('Venues'),
+                            selected: _selectedFilter == 'Venues',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedFilter = 'Venues';
+                                _searchVendors(_searchController.text);
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: const Text('Photographers'),
+                            selected: _selectedFilter == 'Photographers',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedFilter = 'Photographers';
+                                _searchVendors(_searchController.text);
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: const Text('Decorators'),
+                            selected: _selectedFilter == 'Decorators',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedFilter = 'Decorators';
+                                _searchVendors(_searchController.text);
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Featured Section continues...
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Featured', style: textTheme.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const VendorsPage(),
+                              ),
+                            );
+                          },
+                          style: ButtonStyle(
+                            overlayColor: MaterialStateProperty.all(
+                              Colors.grey.withOpacity(0.1),
+                            ),
+                            padding: MaterialStateProperty.all(
+                              const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                            ),
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          child: const Text(
+                            'View All',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Featured Categories
+                  SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: featuredCategories.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () {
+                              if (featuredCategories[index]['type'] == 'food') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'No catering services available at the moment'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => VendorListPage(
+                                      vendors: featuredCategories[index]
+                                                  ['type'] ==
+                                              'venue'
+                                          ? venues
+                                          : featuredCategories[index]['type'] ==
+                                                  'photographer'
+                                              ? photographers
+                                              : decorations,
+                                      category: featuredCategories[index]
+                                              ['title']
+                                          .split('\n')[0],
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: DecorationImage(
+                                        image: AssetImage(
+                                            featuredCategories[index]['image']),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  featuredCategories[index]['title'],
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
                   // Venues in your city section
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -158,7 +457,7 @@ class _HomePageState extends State<HomePage> {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: venues.length,
+                      itemCount: filteredVenues.length, // Use filtered list
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       itemBuilder: (context, index) {
                         return GestureDetector(
@@ -167,7 +466,8 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VendorDetailPage(
-                                  vendorData: venues[index],
+                                  vendorData: filteredVenues[
+                                      index], // Use filtered list
                                   vendorType: 'venue',
                                 ),
                               ),
@@ -188,10 +488,13 @@ class _HomePageState extends State<HomePage> {
                                     child: ClipRRect(
                                       borderRadius: const BorderRadius.vertical(
                                           top: Radius.circular(10)),
-                                      child: venues[index]['images'] != null &&
-                                              venues[index]['images'].isNotEmpty
+                                      child: filteredVenues[index]['images'] !=
+                                                  null && // Change this line
+                                              filteredVenues[index]['images']
+                                                  .isNotEmpty // Change this line
                                           ? Image.network(
-                                              venues[index]['images'][0]
+                                              filteredVenues[index]['images'][
+                                                          0] // Change this line
                                                       ['fullUrl'] ??
                                                   '',
                                               fit: BoxFit.cover,
@@ -220,7 +523,8 @@ class _HomePageState extends State<HomePage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          venues[index]['venueName'] ??
+                                          filteredVenues[index][
+                                                  'venueName'] ?? // Change this line
                                               'Unknown Venue',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
@@ -230,16 +534,16 @@ class _HomePageState extends State<HomePage> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
-                                          venues[index]['address'] ??
+                                          filteredVenues[index][
+                                                  'address'] ?? // Change this line
                                               'Location',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey[600],
                                           ),
                                         ),
-                                        // Star rating row removed
                                         Text(
-                                          'Rs ${venues[index]['price'] ?? '1000'} per plate',
+                                          'Rs ${filteredVenues[index]['price'] ?? '1000'} per plate', // Change this line
                                           style: TextStyle(
                                             fontSize: 12,
                                           ),
@@ -295,8 +599,9 @@ class _HomePageState extends State<HomePage> {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: photographers.length,
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      // For Photographers List
+                      itemCount:
+                          filteredPhotographers.length, // Update this line
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
@@ -304,7 +609,8 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VendorDetailPage(
-                                  vendorData: photographers[index],
+                                  vendorData: filteredPhotographers[
+                                      index], // Update this line
                                   vendorType: 'photographer',
                                 ),
                               ),
@@ -377,7 +683,7 @@ class _HomePageState extends State<HomePage> {
                                             fontSize: 12,
                                             color: Colors.grey[600],
                                           ),
-                                        ),
+                                        ), // Added missing closing parenthesis
                                         Text(
                                           'Rs ${photographers[index]['price'] ?? '50,000'} per Event',
                                           style: TextStyle(
@@ -435,7 +741,7 @@ class _HomePageState extends State<HomePage> {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: decorations.length,
+                      itemCount: filteredDecorations.length, // Change this line
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       itemBuilder: (context, index) {
                         return GestureDetector(
@@ -444,7 +750,8 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VendorDetailPage(
-                                  vendorData: decorations[index],
+                                  vendorData: filteredDecorations[
+                                      index], // Change this line
                                   vendorType: 'decorator',
                                 ),
                               ),
@@ -465,12 +772,16 @@ class _HomePageState extends State<HomePage> {
                                     child: ClipRRect(
                                       borderRadius: const BorderRadius.vertical(
                                           top: Radius.circular(10)),
-                                      child: decorations[index]['images'] !=
+                                      child: filteredDecorations[index][
+                                                      'images'] != // Change this line
                                                   null &&
-                                              decorations[index]['images']
+                                              filteredDecorations[index][
+                                                      'images'] // Change this line
                                                   .isNotEmpty
                                           ? Image.network(
-                                              decorations[index]['images'][0]
+                                              filteredDecorations[index]
+                                                              ['images'][
+                                                          0] // Change this line
                                                       ['fullUrl'] ??
                                                   '',
                                               fit: BoxFit.cover,
@@ -500,7 +811,8 @@ class _HomePageState extends State<HomePage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          decorations[index]['decoratorName'] ??
+                                          filteredDecorations[index][
+                                                  'decoratorName'] ?? // Change this line
                                               'Unknown',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
@@ -510,7 +822,8 @@ class _HomePageState extends State<HomePage> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
-                                          decorations[index]['address'] ??
+                                          filteredDecorations[index][
+                                                  'address'] ?? // Change this line
                                               'Location',
                                           style: TextStyle(
                                             fontSize: 12,
@@ -518,7 +831,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                         Text(
-                                          'Rs ${decorations[index]['price'] ?? '45,000'} per event',
+                                          'Rs ${filteredDecorations[index]['price'] ?? '45,000'} per event', // Change this line
                                           style: TextStyle(
                                             fontSize: 12,
                                           ),
@@ -676,8 +989,6 @@ Widget _buildHorizontalScrollWithButtons(
               ),
             ),
           ),
-
-        // Right scroll button
         if (items.isNotEmpty)
           Positioned(
             right: 0,

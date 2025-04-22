@@ -338,7 +338,14 @@ class _VerifyOTPPageState extends State<VerifyOTPPage> with SingleTickerProvider
                                       if (value.isNotEmpty && index < 5) {
                                         _focusNodes[index + 1].requestFocus();
                                       }
-                                      // Removed auto-verification when all digits are entered
+                                      if (value.isEmpty && index > 0) {
+                                        _focusNodes[index - 1].requestFocus();
+                                      }
+                                    },
+                                    onSubmitted: (value) {
+                                      if (value.isNotEmpty && index < 5) {
+                                        _focusNodes[index + 1].requestFocus();
+                                      }
                                     },
                                   ),
                                 ),

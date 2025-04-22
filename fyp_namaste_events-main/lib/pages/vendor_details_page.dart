@@ -173,6 +173,7 @@ class _VendorDetailsPageState extends State<VendorDetailsPage> {
                                 ),
                               ),
                               ...images.map((image) {
+                                print(image);
                                 return Card(
                                   margin: EdgeInsets.symmetric(vertical: 8.0),
                                   child: Column(
@@ -188,7 +189,7 @@ class _VendorDetailsPageState extends State<VendorDetailsPage> {
                                         ),
                                       ),
                                       Image.network(
-                                        '${APIConstants.baseUrl}uploads/vendor/${image['fileName']}',
+                                        '${APIConstants.baseUrl}${image['filePath']}/${image['fileName']}',
                                         height: 300,
                                         width: double.infinity,
                                         fit: BoxFit.contain,

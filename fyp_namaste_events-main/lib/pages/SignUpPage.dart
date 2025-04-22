@@ -3,6 +3,7 @@ import 'package:fyp_namaste_events/pages/otp/VerifyOTPPage.dart';
 import 'package:fyp_namaste_events/services/Api/api_authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:fyp_namaste_events/pages/login_register_page.dart';
+import 'package:fyp_namaste_events/utils/validator.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -28,133 +29,226 @@ class _SignUpPageState extends State<SignUpPage> {
   bool isSigningUp = false;
 
   void _signUp() async {
-    if (isSigningUp) return; // Prevent multiple clicks
+    if (isSigningUp) return;
 
     setState(() {
       isSigningUp = true;
       errorMessage = '';
+    });
 
-      if (controllerPassword.text != controllerConfirmPassword.text) {
-        errorMessage = "Passwords do not match.";
-        isSigningUp = false;
-      } else if (!isTermsAccepted) {
-        errorMessage = "You must accept the Terms of Service.";
-        isSigningUp = false;
-      } else if (selectedRole == null || selectedRole!.isEmpty) {
-        errorMessage = "Please select a role.";
-        isSigningUp = false;
-      } else {
-        var data = {
-          "userName": controllerName.text,
-          "email": controllerEmail.text,
-          "phone": controllerPhone.text,
-          "password": controllerPassword.text,
-          "role": selectedRole,
-          "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
-          "category": selectedRole == "Admin" ? selectedVendorType : null,
-        };
+    // Validate all fields
+    String? nameError = Validator.validateName(controllerName.text);
+    String? emailError = Validator.validateEmail(controllerEmail.text);
+    String? phoneError = Validator.validatePhone(controllerPhone.text);
+    String? passwordError = Validator.validatePassword(controllerPassword.text);
+    String? confirmPasswordError = Validator.validateConfirmPassword(
+        controllerConfirmPassword.text, controllerPassword.text);
+    String? roleError = Validator.validateRole(selectedRole);
+    String? vendorTypeError =
+        Validator.validateVendorType(selectedVendorType, selectedRole);
 
-        // Call the API and handle the response
-        Api.signup(data).then((response) {
-          setState(() {
-            isSigningUp = false;
-          });
+    // Check for validation errors
+    if (nameError != null) {
+      setState(() {
+        errorMessage = nameError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (emailError != null) {
+      setState(() {
+        errorMessage = emailError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (phoneError != null) {
+      setState(() {
+        errorMessage = phoneError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (passwordError != null) {
+      setState(() {
+        errorMessage = passwordError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (confirmPasswordError != null) {
+      setState(() {
+        errorMessage = confirmPasswordError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (roleError != null) {
+      setState(() {
+        errorMessage = roleError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (vendorTypeError != null) {
+      setState(() {
+        errorMessage = vendorTypeError;
+        isSigningUp = false;
+      });
+      return;
+    } else if (!isTermsAccepted) {
+      setState(() {
+        errorMessage = "You must accept the Terms of Service";
+        isSigningUp = false;
+      });
+      return;
+    }
 
-          if (response != null) {
-            int statusCode = response["status_code"];
-            print(response["userDetails"]["role"]);
-            if (statusCode == 200) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Signup successful! Please log in."),
-                  backgroundColor: Colors.green,
+    // If all validations pass, proceed with signup
+    var data = {
+      "userName": controllerName.text,
+      "email": controllerEmail.text,
+      "phone": controllerPhone.text,
+      "password": controllerPassword.text,
+      "role": selectedRole,
+      "vendorType": selectedRole == "Admin" ? selectedVendorType : null,
+      "category": selectedRole == "Admin" ? selectedVendorType : null,
+    };
+
+    try {
+      // Call the API and handle the response
+      final response = await Api.signup(data);
+      
+      if (response != null) {
+        int statusCode = response["status_code"];
+        if (statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Signup successful! Please verify your email."),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (response["userDetails"]["role"] == "User") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VerifyOTPPage(
+                  userId: response['userId'],
+                  email: controllerEmail.text,
                 ),
-              );
-              if (response["userDetails"]["role"] == "User") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VerifyOTPPage(
-                      userId: response['userId'],
-                      email: controllerEmail.text,
-                    ),
-                  ),
-                );
-              }
-            } else {
-              setState(() {
-                errorMessage = "Signup failed. Try again.";
-              });
-            }
-          } else {
-            setState(() {
-              errorMessage = "Unexpected response from server.";
-            });
+              ),
+            );
           }
-        }).catchError((error) {
+        } else if (statusCode == 409) {  // Assuming 409 is the status code for email conflict
           setState(() {
-            isSigningUp = false;
-            errorMessage = "Error occurred: ${error.toString()}";
+            errorMessage = "This email address is already registered.";
+            // Update the email field error state
+            controllerEmail.text = controllerEmail.text; // Trigger field validation
           });
+        } else {
+          setState(() {
+            errorMessage = response["message"] ?? "Signup failed. Try again.";
+          });
+        }
+      } else {
+        setState(() {
+          errorMessage = "Unexpected response from server.";
         });
       }
-    });
+    } catch (error) {
+      setState(() {
+        errorMessage = "Error occurred: ${error.toString()}";
+      });
+    } finally {
+      setState(() {
+        isSigningUp = false;
+      });
+    }
   }
 
   Widget _entryField(String title, TextEditingController controller,
       {bool isPassword = false, bool isConfirmPassword = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: (isPassword && !isPasswordVisible) ||
-          (isConfirmPassword && !isConfirmPasswordVisible),
-      decoration: InputDecoration(
-        labelText: title,
-        border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(15.0), // Increased circular radius
+    // Get field-specific error message
+    String? getFieldError() {
+      if (controller.text.isEmpty) return null;
+      
+      switch (title) {
+        case "Name":
+          return Validator.validateName(controller.text);
+        case "Email":
+          return Validator.validateEmail(controller.text);
+        case "Phone Number":
+          return Validator.validatePhone(controller.text);
+        case "Password":
+          return Validator.validatePassword(controller.text);
+        case "Confirm Password":
+          return Validator.validateConfirmPassword(
+              controller.text, controllerPassword.text);
+        default:
+          return null;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: (isPassword && !isPasswordVisible) ||
+              (isConfirmPassword && !isConfirmPasswordVisible),
+          onChanged: (value) {
+            // Trigger rebuild to show/hide error
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            labelText: title,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+              borderSide: BorderSide(
+                color: getFieldError() != null ? Colors.red : Colors.grey,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+              borderSide: BorderSide(
+                color: getFieldError() != null ? Colors.red : Colors.black,
+              ),
+            ),
+            fillColor: Colors.white,
+            filled: true,
+            prefixIcon: Icon(
+              isPassword || isConfirmPassword
+                  ? Icons.lock
+                  : title == "Email"
+                      ? Icons.email
+                      : title == "Name"
+                          ? Icons.person
+                          : title == "Phone Number"
+                              ? Icons.phone
+                              : Icons.text_fields,
+              color: getFieldError() != null ? Colors.red : Colors.grey,
+            ),
+            suffixIcon: isPassword || isConfirmPassword
+                ? IconButton(
+                    icon: Icon(
+                      (isPassword && isPasswordVisible) ||
+                              (isConfirmPassword && isConfirmPasswordVisible)
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: getFieldError() != null ? Colors.red : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (isPassword) {
+                          isPasswordVisible = !isPasswordVisible;
+                        } else {
+                          isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                        }
+                      });
+                    },
+                  )
+                : null,
+            errorText: getFieldError(),
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: const BorderSide(color: Colors.black),
-        ),
-        fillColor: Colors.white, // Full white background
-        filled: true,
-        prefixIcon: Icon(
-          isPassword || isConfirmPassword
-              ? Icons.lock
-              : title == "Email"
-                  ? Icons.email
-                  : title == "Name"
-                      ? Icons.person
-                      : title == "Phone Number"
-                          ? Icons.phone
-                          : Icons.text_fields,
-          color: Colors.grey,
-        ),
-        suffixIcon: isPassword || isConfirmPassword
-            ? IconButton(
-                icon: Icon(
-                  (isPassword && isPasswordVisible) ||
-                          (isConfirmPassword && isConfirmPasswordVisible)
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() {
-                    if (isPassword) {
-                      isPasswordVisible = !isPasswordVisible;
-                    } else {
-                      isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                    }
-                  });
-                },
-              )
-            : null,
-      ),
+      ],
     );
   }
 

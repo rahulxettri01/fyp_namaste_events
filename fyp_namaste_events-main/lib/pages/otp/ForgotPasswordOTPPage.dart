@@ -131,7 +131,7 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
       if (response != null && response['success'] == true) {
         // Reset animation before showing new form
         _animationController.reset();
-        
+
         setState(() {
           _otpVerified = true;
           _isLoading = false;
@@ -142,7 +142,8 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('OTP verified successfully! Please set a new password.'),
+            content:
+                Text('OTP verified successfully! Please set a new password.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -312,7 +313,8 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
                       if (notification.extent <= 0.2) {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
                         );
                       }
                       return true;
@@ -426,6 +428,14 @@ class _ForgotPasswordOTPPageState extends State<ForgotPasswordOTPPage>
                   FilteringTextInputFormatter.digitsOnly,
                 ],
                 onChanged: (value) {
+                  if (value.isNotEmpty && index < 5) {
+                    _focusNodes[index + 1].requestFocus();
+                  }
+                  if (value.isEmpty && index > 0) {
+                    _focusNodes[index - 1].requestFocus();
+                  }
+                },
+                onSubmitted: (value) {
                   if (value.isNotEmpty && index < 5) {
                     _focusNodes[index + 1].requestFocus();
                   }

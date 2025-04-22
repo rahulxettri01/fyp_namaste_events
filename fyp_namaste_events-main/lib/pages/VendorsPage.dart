@@ -408,15 +408,24 @@ class _VendorsPageState extends State<VendorsPage>
                           color: Colors.yellow[200]!,
                           image: 'assets/food.png',
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VendorDetailPage(
-                                  vendorData: foodServices,
-                                  vendorType: 'food',
+                            if (foodServices.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No food services available at the moment'),
+                                  duration: Duration(seconds: 2),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VendorDetailPage(
+                                    vendorData: foodServices,
+                                    vendorType: 'food',
+                                  ),
+                                ),
+                              );
+                            }
                           },
                         ),
   

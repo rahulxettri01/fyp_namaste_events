@@ -353,6 +353,8 @@ router.post("/get_verification_images", VerifyJWT, async (req, res) => {
               folderName: folderName,
             }
           );
+          console.log("Inventory files response:", resp.data);
+
           if (resp.data && resp.data.status_code === 200) {
             return res.status(200).json({
               status_code: 200,
