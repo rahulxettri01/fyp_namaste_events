@@ -149,6 +149,7 @@ class _DecorationDashboardState extends State<DecorationDashboard> {
   }
 
   // Function to navigate to different pages
+  // In the _navigateToPage method, add this case:
   void _navigateToPage(String page) async {
     switch (page) {
       case 'Dashboard':
@@ -175,8 +176,9 @@ class _DecorationDashboardState extends State<DecorationDashboard> {
           context,
           MaterialPageRoute(
             builder: (context) => VendorAvailabilityPage(
-              vendorId: jwtde['_id'],
+              vendorId: jwtde['id'],
               vendorType: 'decoration',
+              token: widget.token,
             ),
           ),
         );
@@ -369,6 +371,14 @@ class _DecorationDashboardState extends State<DecorationDashboard> {
               title: Text('Add Inventory'),
               onTap: () {
                 _navigateToPage('Add Inventory');
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.calendar_today),
+              title: Text('Manage Availability'),
+              onTap: () {
+                _navigateToPage('Availability');
               },
             ),
             Divider(),

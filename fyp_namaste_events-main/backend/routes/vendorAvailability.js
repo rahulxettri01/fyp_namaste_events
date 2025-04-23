@@ -14,16 +14,42 @@ const isValidTimeFormat = (time) => {
 // Create availability slot
 router.post("/create-slot", VerifyJWT, async (req, res) => {
   try {
-    console.log(req.user);
+    console.log("create-slot endpoint");
 
     const vendorEmail = req.user["email"];
-    const { date, startDate, endDate, category } = req.body;
+    const { startDate, endDate, category } = req.body;
 
     // Validate required fields
-    if (!vendorEmail || !date || !startDate || !endDate || !category) {
+    if (!vendorEmail || !startDate || !endDate || !category) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
+      });
+    }
+
+    // Check for existing slot
+    let existingSlot;
+    await connectInventoryDB(async () => {
+      existingSlot = await AvailabilityModel.find({
+        vendorEmail,
+        category,
+      });
+    });
+
+    if (existingSlot) {
+      // Update existing slot
+      existingSlot[0].startDate = startDate;
+      existingSlot[0].endDate = endDate;
+      console.log("existingSlot", existingSlot);
+
+      // Save the updated slot
+      await connectInventoryDB(async () => {
+        await existingSlot[0].save();
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Availability slot updated successfully",
       });
     }
 
@@ -128,7 +154,9 @@ router.post("/create-slot", VerifyJWT, async (req, res) => {
 // Get vendor availability
 router.get("/available", async (req, res) => {
   try {
-    const { vendorEmail } = req.body;
+    const { vendorEmail } = req.query;
+    console.log("ven", vendorEmail);
+
     let availability;
     await connectInventoryDB(async () => {
       availability = await AvailabilityModel.find({

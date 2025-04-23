@@ -68,6 +68,7 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
     try {
       List<dynamic> data = await Api.getInventory();
       print("Fetched data: $data");
+      print("decoded data: $jwtde");
       setState(() {
         inventoryList = data;
         isLoading = false;
@@ -159,42 +160,43 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
 
   // Function to navigate to different pages
   void _navigateToPage(String page) async {
-      switch (page) {
-        case 'Dashboard':
-          break;
-        case 'Profile':
-          break;
-        case 'Settings':
-          break;
-        case 'Add Inventory':
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddInventoryPage(token: widget.token),
+    switch (page) {
+      case 'Dashboard':
+        break;
+      case 'Profile':
+        break;
+      case 'Settings':
+        break;
+      case 'Add Inventory':
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddInventoryPage(token: widget.token),
+          ),
+        );
+
+        if (result == true) {
+          print("Inventory item added");
+          _fetchInventory();
+        }
+        break;
+      case 'Availability': // Add this case
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VendorAvailabilityPage(
+              vendorId: jwtde['id'],
+              vendorType: 'photography',
+              token: widget.token,
             ),
-          );
-  
-          if (result == true) {
-            print("Inventory item added");
-            _fetchInventory();
-          }
-          break;
-        case 'Availability':  // Add this case
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VendorAvailabilityPage(
-                vendorId: jwtde['_id'],
-                vendorType: 'photography',
-              ),
-            ),
-          );
-          break;
-        default:
-          break;
-      }
+          ),
+        );
+        break;
+      default:
+        break;
     }
-  
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -307,7 +309,16 @@ class _PhotographyDashboardState extends State<PhotographyDashboard> {
               leading: Icon(Icons.calendar_today),
               title: Text('Manage Availability'),
               onTap: () {
-                _navigateToPage('Availability');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VendorAvailabilityPage(
+                      vendorId: jwtde['id'],
+                      vendorType: 'photography',
+                      token: widget.token,
+                    ),
+                  ),
+                );
               },
             ),
             Divider(),

@@ -10,6 +10,7 @@ const AvailabilitySchema = new mongoose.Schema(
     vendorEmail: {
       type: String,
       required: true,
+      unique: true,
     },
     // serviceEmail: {
     //   type: String,
