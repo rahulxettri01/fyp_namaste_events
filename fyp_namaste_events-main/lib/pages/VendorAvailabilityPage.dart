@@ -71,58 +71,37 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
       return;
     }
 
-    // Calculate the difference in days
-    final difference = _rangeEnd!.difference(_rangeStart!).inDays;
-
-    // Validate minimum 5 days
-    if (difference < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select at least 5 days')),
-      );
-      return;
-    }
-
-    // Validate maximum 30 days
-    if (difference > 30) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Maximum selection is 30 days')),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/create-slot'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: json.encode({
-          'startDate': DateFormat('yyyy-MM-dd').format(_rangeStart!),
-          'endDate': DateFormat('yyyy-MM-dd').format(_rangeEnd!),
-          'category': widget.vendorType.toLowerCase() == 'photography'
-              ? 'Photography'
-              : widget.vendorType.toLowerCase() == 'venue'
-                  ? 'Venue'
-                  : widget.vendorType.toLowerCase() == 'decoration'
-                      ? 'Decoration' // imp todo: check the spelling
-                      : widget.vendorType,
-        }),
+      // Prepare slot data
+      final slotData = {
+        'vendorEmail': vendorEmail,
+        'startDate': DateFormat('yyyy-MM-dd').format(_rangeStart!),
+        'endDate': DateFormat('yyyy-MM-dd').format(_rangeEnd!),
+        'category': widget.vendorType.toLowerCase() == 'photography'
+            ? 'Photography'
+            : widget.vendorType.toLowerCase() == 'venue'
+                ? 'Venue'
+                : 'Decorator',
+        'status': 'Available'
+      };
+
+      print('Creating slot with data: ${jsonEncode(slotData)}');
+
+      final success = await ApiVendorAvailability.createSlot(
+        widget.token,
+        slotData,
       );
 
-      final responseData = json.decode(response.body);
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(responseData['message'] ??
-                'Availability slot created successfully'),
+            content: Text('Availability slot created successfully'),
             backgroundColor: Colors.green,
           ),
         );
-        _loadAvailableSlots(); // Refresh the list
+        await _loadAvailableSlots(); // Refresh the list
         setState(() {
           _rangeStart = null;
           _rangeEnd = null;
@@ -130,17 +109,16 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(responseData['message'] ??
-                'Failed to create availability slot'),
+            content: Text('Failed to create availability slot'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      print(e.toString());
+      print('Error creating slot: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Errorlol1: ${e.toString()}'),
+          content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -149,6 +127,62 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
     }
   }
 
+  Future<void> _updateAvailabilitySlot(Map<String, dynamic> slot) async {
+      setState(() => _isLoading = true);
+      try {
+        final updateData = {
+          'startDate': _rangeStart != null ? 
+              DateFormat('yyyy-MM-dd').format(_rangeStart!) : 
+              slot['startDate'],
+          'endDate': _rangeEnd != null ? 
+              DateFormat('yyyy-MM-dd').format(_rangeEnd!) : 
+              slot['endDate'],
+          'status': slot['status'] == 'Available' ? 'Booked' : 'Available',
+          'category': widget.vendorType
+        };
+  
+        print('Updating slot with data: ${jsonEncode(updateData)}');
+  
+        final success = await ApiVendorAvailability.updateSlot(
+          widget.token,
+          slot['availabilityID'],  // Use availabilityID instead of _id
+          updateData,
+        );
+  
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Availability updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          setState(() {
+            _rangeStart = null;
+            _rangeEnd = null;
+          });
+          await _loadAvailableSlots();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update availability'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        print('Error updating slot: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
+  
+  // Remove the standalone ListTile widget and update the ListView.builder
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,26 +201,50 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
             rangeEndDay: _rangeEnd,
             rangeSelectionMode: RangeSelectionMode.enforced,
             onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
+              if (!isSameDay(_selectedDay, selectedDay)) {
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                  _rangeStart = null;
+                  _rangeEnd = null;
+                });
+              }
             },
             onRangeSelected: (start, end, focusedDay) {
               setState(() {
+                _selectedDay = null;
                 _rangeStart = start;
                 _rangeEnd = end;
                 _focusedDay = focusedDay;
               });
+              print('Range selected: ${start?.toString()} to ${end?.toString()}');
             },
             onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
+              if (_calendarFormat != format) {
+                setState(() {
+                  _calendarFormat = format;
+                });
+              }
             },
             onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
+              setState(() {
+                _focusedDay = focusedDay;
+              });
             },
+            // Add calendar styling
+            calendarStyle: CalendarStyle(
+              // rangeHighlightColor: Color.pink[100],
+              rangeStartDecoration: BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+              rangeEndDecoration: BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+              withinRangeTextStyle: const TextStyle(color: Colors.black),
+              selectedTextStyle: const TextStyle(color: Colors.white),
+            ),
           ),
           SizedBox(height: 20),
           if (_rangeStart != null && _rangeEnd != null)
@@ -209,12 +267,43 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
                     itemCount: _availableSlots.length,
                     itemBuilder: (context, index) {
                       final slot = _availableSlots[index];
-                      print("SlotLOL: $slot");
                       return ListTile(
                         title: Text(
                           '${DateFormat('MMM dd').format(DateTime.parse(slot['startDate']))} - ${DateFormat('MMM dd').format(DateTime.parse(slot['endDate']))}',
                         ),
                         subtitle: Text('Status: ${slot['status']}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit_calendar),
+                              color: Colors.blue,
+                              onPressed: () {
+                                if (_rangeStart != null && _rangeEnd != null) {
+                                  _updateAvailabilitySlot(slot);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Please select new date range first'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                slot['status'] == 'Available' 
+                                    ? Icons.check_circle_outline 
+                                    : Icons.cancel_outlined,
+                                color: slot['status'] == 'Available' 
+                                    ? Colors.green 
+                                    : Colors.red,
+                              ),
+                              onPressed: () => _updateAvailabilitySlot(slot),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

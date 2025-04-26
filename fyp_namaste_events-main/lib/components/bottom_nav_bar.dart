@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_namaste_events/pages/BookingListPage.dart';
 import 'package:fyp_namaste_events/pages/ProfilePage.dart';
 import 'package:fyp_namaste_events/pages/VendorsPage.dart';
 import 'package:fyp_namaste_events/pages/bookingPage.dart';
@@ -69,7 +70,19 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 );
                 break;
               case 2:
-                // Booking page navigation (commented)
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const BookingListPage(),
+                    transitionDuration: const Duration(milliseconds: 500),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
                 break;
               case 3:
                 Navigator.pushNamed(context, '/notifications');

@@ -3,22 +3,22 @@ const mongoose = require("mongoose");
 const AvailabilitySchema = new mongoose.Schema(
   {
     availabilityID: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       unique: true,
-      default: () => new mongoose.Types.ObjectId(),
+      default: () => new mongoose.Types.ObjectId().toString(),
     },
     vendorEmail: {
       type: String,
       required: true,
-      unique: true,
     },
-    // serviceEmail: {
-    //   type: String,
-    //   required: true,
-    // },
-    // date: { type: Date, required: true },
-    startDate: { type: String, required: true },
-    endDate: { type: String, required: true },
+    startDate: {
+      type: String,
+      required: true,
+    },
+    endDate: {
+      type: String,
+      required: true,
+    },
     category: {
       type: String,
       required: true,
@@ -31,7 +31,16 @@ const AvailabilitySchema = new mongoose.Schema(
       default: "Available",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: "availabilities",
+  }
+);
+
+// Create compound index for unique date ranges per vendor
+AvailabilitySchema.index(
+  { vendorEmail: 1, startDate: 1, endDate: 1, category: 1 },
+  { unique: true }
 );
 
 const AvailabilityModel = mongoose.model("Availability", AvailabilitySchema);

@@ -30,7 +30,7 @@ class ApiVendorAvailability {
       String token, Map<String, dynamic> slotData) async {
     try {
       final response = await http.post(
-        Uri.parse('${APIConstants.baseUrl}vendorAvailability/create-slot'),
+        Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/create-slot'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -38,9 +38,89 @@ class ApiVendorAvailability {
         body: jsonEncode(slotData),
       );
 
-      return response.statusCode == 201;
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['success'] ?? false;
+      }
+      return false;
     } catch (e) {
-      throw Exception('Failed to create availability slot: $e');
+      print('Error in createSlot: $e');
+      return false;
     }
   }
+
+  static Future<bool> updateSlot(
+      String token, String slotId, Map<String, dynamic> updateData) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/update-slot/$slotId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      print('Update Response status: ${response.statusCode}');
+      print('Update Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['success'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('Error in updateSlot: $e');
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> fetchVendorAvailability(String vendorEmail) async {
+      try {
+        final response = await http.get(
+          Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/slots/$vendorEmail'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        );
+  
+        print('Fetch Availability Response status: ${response.statusCode}');
+        print('Fetch Availability Response body: ${response.body}');
+  
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['data'] ?? [];
+        }
+        return [];
+      } catch (e) {
+        print('Error fetching vendor availability: $e');
+        return [];
+      }
+    }
+
+  static Future<List<dynamic>> fetchVendorAvailabilityById(String vendorId) async {
+      try {
+        final response = await http.get(
+          Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/slots/vendor/$vendorId'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        );
+  
+        print('Fetch Availability Response status: ${response.statusCode}');
+        print('Fetch Availability Response body: ${response.body}');
+  
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['data'] ?? [];
+        }
+        return [];
+      } catch (e) {
+        print('Error fetching vendor availability: $e');
+        return [];
+      }
+    }
 }
