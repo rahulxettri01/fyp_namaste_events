@@ -81,7 +81,7 @@ class ApiVendorAvailability {
   static Future<List<dynamic>> fetchVendorAvailability(String vendorEmail) async {
       try {
         final response = await http.get(
-          Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/slots/$vendorEmail'),
+          Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/available?vendorEmail=$vendorEmail'),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -116,6 +116,31 @@ class ApiVendorAvailability {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           return data['data'] ?? [];
+        }
+        return [];
+      } catch (e) {
+        print('Error fetching vendor availability: $e');
+        return [];
+      }
+    }
+
+  static Future<List<dynamic>> fetchVendorAvailabilityByEmail(String email) async {
+      try {
+        final response = await http.get(
+          Uri.parse('${APIConstants.baseUrl}api/vendorAvailability/slots/email/$email'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        );
+  
+        print('Fetch Availability Response status: ${response.statusCode}');
+        print('Fetch Availability Response body: ${response.body}');
+  
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true) {
+            return data['data'] ?? [];
+          }
         }
         return [];
       } catch (e) {

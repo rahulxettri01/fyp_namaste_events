@@ -1,51 +1,50 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "userModel",
-    required: true,
-  },
-  vendorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "vendorModels",
-    required: true,
-  },
-  eventDetails: {
-    eventType: { type: String, required: true },
-    eventDate: { type: Date, required: true },
-    guestCount: { type: Number, required: true },
-    requirements: { type: String },
-    venue: { type: String },
-  },
-  bookingStatus: {
-    type: String,
-    enum: ["pending", "confirmed", "cancelled", "completed"],
-    default: "pending",
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["pending", "partial", "completed"],
-    default: "pending",
-  },
-  totalAmount: {
-    type: Number,
-    required: true,
-  },
-  paidAmount: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+    customerID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+        required: true
+    },
+    artistID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Artist',
+        required: true
+    },
+    serviceID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Service',
+        required: true
+    },
+    availabilityID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Availability',
+        required: true
+    },
+    price: {
+        type: Number,
+        required: true
+    },
+    paymentMethod: { 
+        type: String, 
+        enum: ["Khalti", "khalti"], 
+        required: true 
+    },
+    bookingStatus: {
+        type: String,
+        default: 'Pending'
+    },
+    paymentStatus: {
+        type: String,
+        default: 'Pending'
+    },
+    status: {
+        type: String,
+        enum: ['active', 'completed', 'canceled'],
+        default: 'active'
+    },
 
-const bookingModel = mongoose.model("Booking", bookingSchema);
+}, { timestamps: true });
 
-module.exports = { bookingModel };
+const Booking = mongoose.model('Booking', bookingSchema);
+export default Booking;

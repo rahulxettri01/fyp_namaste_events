@@ -44,24 +44,40 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
   Future<void> _loadAvailableSlots() async {
     setState(() => _isLoading = true);
     try {
-      final response = await ApiVendorAvailability.getAvailableSlots(
+      print("Fetching slots for vendor email: $vendorEmail");
+      final slots = await ApiVendorAvailability.getAvailableSlots(
         vendorEmail,
         widget.token,
       );
-      print("Response from API: $response");
 
-      // Directly use the response as it's already a List<dynamic>
-      setState(() => _availableSlots = response);
-      print("Available Slots: $_availableSlots");
+      if (slots != null) {
+        setState(() {
+          _availableSlots = slots;
+        });
+        print("Loaded ${slots.length} availability slots");
+      } else {
+        print("No slots returned from API");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No availability slots found'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     } catch (e) {
       print("Error loading slots: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load availability slots')),
+        SnackBar(
+          content: Text('Failed to load availability slots: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => _isLoading = false);
     }
   }
+
+  // Update the ListView builder to show more slot details
 
   Future<void> _createAvailabilitySlot() async {
     if (_rangeStart == null || _rangeEnd == null) {
@@ -128,60 +144,60 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
   }
 
   Future<void> _updateAvailabilitySlot(Map<String, dynamic> slot) async {
-      setState(() => _isLoading = true);
-      try {
-        final updateData = {
-          'startDate': _rangeStart != null ? 
-              DateFormat('yyyy-MM-dd').format(_rangeStart!) : 
-              slot['startDate'],
-          'endDate': _rangeEnd != null ? 
-              DateFormat('yyyy-MM-dd').format(_rangeEnd!) : 
-              slot['endDate'],
-          'status': slot['status'] == 'Available' ? 'Booked' : 'Available',
-          'category': widget.vendorType
-        };
-  
-        print('Updating slot with data: ${jsonEncode(updateData)}');
-  
-        final success = await ApiVendorAvailability.updateSlot(
-          widget.token,
-          slot['availabilityID'],  // Use availabilityID instead of _id
-          updateData,
-        );
-  
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Availability updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          setState(() {
-            _rangeStart = null;
-            _rangeEnd = null;
-          });
-          await _loadAvailableSlots();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update availability'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        print('Error updating slot: $e');
+    setState(() => _isLoading = true);
+    try {
+      final updateData = {
+        'startDate': _rangeStart != null
+            ? DateFormat('yyyy-MM-dd').format(_rangeStart!)
+            : slot['startDate'],
+        'endDate': _rangeEnd != null
+            ? DateFormat('yyyy-MM-dd').format(_rangeEnd!)
+            : slot['endDate'],
+        'status': slot['status'] == 'Available' ? 'Booked' : 'Available',
+        'category': widget.vendorType
+      };
+
+      print('Updating slot with data: ${jsonEncode(updateData)}');
+
+      final success = await ApiVendorAvailability.updateSlot(
+        widget.token,
+        slot['availabilityID'], // Use availabilityID instead of _id
+        updateData,
+      );
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Availability updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _rangeStart = null;
+          _rangeEnd = null;
+        });
+        await _loadAvailableSlots();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update availability'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
-        setState(() => _isLoading = false);
       }
+    } catch (e) {
+      print('Error updating slot: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
-  
+  }
+
   // Remove the standalone ListTile widget and update the ListView.builder
   @override
   Widget build(BuildContext context) {
@@ -217,7 +233,8 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
                 _rangeEnd = end;
                 _focusedDay = focusedDay;
               });
-              print('Range selected: ${start?.toString()} to ${end?.toString()}');
+              print(
+                  'Range selected: ${start?.toString()} to ${end?.toString()}');
             },
             onFormatChanged: (format) {
               if (_calendarFormat != format) {
@@ -284,7 +301,8 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Please select new date range first'),
+                                      content: Text(
+                                          'Please select new date range first'),
                                       backgroundColor: Colors.orange,
                                     ),
                                   );
@@ -293,11 +311,11 @@ class _VendorAvailabilityPageState extends State<VendorAvailabilityPage> {
                             ),
                             IconButton(
                               icon: Icon(
-                                slot['status'] == 'Available' 
-                                    ? Icons.check_circle_outline 
+                                slot['status'] == 'Available'
+                                    ? Icons.check_circle_outline
                                     : Icons.cancel_outlined,
-                                color: slot['status'] == 'Available' 
-                                    ? Colors.green 
+                                color: slot['status'] == 'Available'
+                                    ? Colors.green
                                     : Colors.red,
                               ),
                               onPressed: () => _updateAvailabilitySlot(slot),

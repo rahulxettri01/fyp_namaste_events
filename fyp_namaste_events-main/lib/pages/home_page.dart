@@ -7,6 +7,7 @@ import '../components/bottom_nav_bar.dart';
 import '../services/Api/vendorService.dart';
 import '../utils/costants/api_constants.dart';
 import 'package:fyp_namaste_events/pages/vendor_list_page.dart';
+import 'dart:math';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -14,6 +15,8 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
+
+// Add this at the top with other imports
 
 class _HomePageState extends State<HomePage> {
   late VendorService vendorService;

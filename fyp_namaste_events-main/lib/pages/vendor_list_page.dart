@@ -14,36 +14,37 @@ class VendorListPage extends StatelessWidget {
     required this.category,
   }) : super(key: key);
 
-  Future<void> _checkAvailability(
-      BuildContext context, Map<String, dynamic> vendor) async {
+  Future<void> _checkAvailability(BuildContext context, Map<String, dynamic> vendor) async {
     try {
-      final vendorId = vendor['_id']?.toString();
-      if (vendorId == null) {
+      final vendorEmail = vendor['email']?.toString();
+      print('Vendor Email: $vendorEmail'); // Debug print
+      
+      if (vendorEmail == null || vendorEmail.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Vendor ID not found'),
+            content: Text('Error: Vendor email is missing in the vendor data'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
         return;
       }
 
-      final availableSlots =
-          await ApiVendorAvailability.fetchVendorAvailabilityById(
-        vendorId,
+      final availableSlots = await ApiVendorAvailability.fetchVendorAvailability(
+        vendorEmail,
       );
 
       if (availableSlots.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No availability slots found for this vendor'),
+            content: Text('No available slots found for vendor: $vendorEmail'),
             backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
           ),
         );
         return;
       }
 
-      // Show availability view
       Navigator.push(
         context,
         MaterialPageRoute(
